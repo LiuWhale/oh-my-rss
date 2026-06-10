@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+from argparse import ArgumentParser
+from pathlib import Path
+import json
+import shutil
+import sys
+
+
+EXAMPLE_CONFIG = """# Copy to config.yaml and edit for your installation.
+freshrss:
+  # Path to FreshRSS SQLite DB. For Docker, bind-mount the DB file or data dir.
+  db_path: /path/to/FreshRSS/data/users/your-user/db.sqlite
+  category: 论文
+
+site:
+  public_base_url: https://example.com/paper-feeds/summaries
+  output_dir: ./site
+
+codex:
+  command: [codex, -a, never, -s, read-only, exec]
+  timeout_seconds: 900
+  reasoning_effort: low
+
+runtime:
+  state_dir: ./state
+  curl_bin: curl
+  pdftotext_bin: pdftotext
+  pdf_timeout_seconds: 120
+  pdf_max_chars: 60000
+"""
+
+
+def build_parser() -> ArgumentParser:
+    parser = ArgumentParser(prog="freshrss-arxiv-codex")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    init = sub.add_parser("init-config", help="write an example config file")
+    init.add_argument("--output", type=Path, default=Path("config.yaml"))
+
+    run = sub.add_parser("run", help="summarize new arXiv papers")
+    run.add_argument("--config", type=Path, default=Path("config.yaml"))
+    run.add_argument("--limit", type=int, default=1)
+    run.add_argument("--since-days", type=int, default=7)
+    run.add_argument("--lookback", type=int, default=1000)
+    run.add_argument("--force-id")
+    run.add_argument("--dry-run", action="store_true")
+    run.add_argument("--no-pdf", action="store_true")
+    run.add_argument("--no-freshrss-link", action="store_true")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command == "init-config":
+        if args.output.exists():
+            parser.error(f"{args.output} already exists")
+        args.output.write_text(EXAMPLE_CONFIG, encoding="utf-8")
+        print(f"wrote {args.output}")
+        return 0
+
+    if args.command == "run":
+        missing = [tool for tool in ("curl", "pdftotext") if shutil.which(tool) is None]
+        if missing and not args.no_pdf:
+            parser.error(f"missing required tools for PDF mode: {', '.join(missing)}")
+        from .app import run_once
+        from .config import AppConfig
+
+        config = AppConfig.from_yaml(args.config)
+        changed = run_once(
+            config,
+            limit=args.limit,
+            since_days=args.since_days,
+            lookback=args.lookback,
+            force_id=args.force_id,
+            write_freshrss_links=not args.no_freshrss_link,
+            use_pdf=not args.no_pdf,
+            dry_run=args.dry_run,
+        )
+        print(json.dumps(changed, ensure_ascii=False, indent=2))
+        return 0
+
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

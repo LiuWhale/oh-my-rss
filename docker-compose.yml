@@ -1,0 +1,21 @@
+services:
+  summarizer:
+    build: .
+    image: freshrss-arxiv-codex-summarizer:local
+    env_file: .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./state:/app/state
+      - ./site:/app/site
+      # Example: mount FreshRSS data read-write if you want link back-writing.
+      # - /path/to/FreshRSS/data:/freshrss-data
+    command:
+      - run
+      - --config
+      - /app/config.yaml
+      - --limit
+      - ${RUN_LIMIT:-1}
+      - --since-days
+      - ${RUN_SINCE_DAYS:-7}
+      - --lookback
+      - ${RUN_LOOKBACK:-1000}

@@ -1,0 +1,22 @@
+freshrss:
+  # Path to FreshRSS SQLite DB. For Docker deployments, bind-mount this file or
+  # the FreshRSS data directory into the summarizer container.
+  db_path: /path/to/FreshRSS/data/users/your-user/db.sqlite
+  category: 论文
+
+site:
+  # Public URL prefix matching output_dir.
+  public_base_url: https://example.com/paper-feeds/summaries
+  output_dir: ./site
+
+codex:
+  command: [codex, -a, never, -s, read-only, exec]
+  timeout_seconds: 900
+  reasoning_effort: low
+
+runtime:
+  state_dir: ./state
+  curl_bin: curl
+  pdftotext_bin: pdftotext
+  pdf_timeout_seconds: 120
+  pdf_max_chars: 60000

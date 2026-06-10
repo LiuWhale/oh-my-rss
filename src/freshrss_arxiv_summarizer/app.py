@@ -1,0 +1,155 @@
+from __future__ import annotations
+
+from dataclasses import asdict
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+import time
+
+from .arxiv import Paper, group_entries
+from .codex import run_codex_summary
+from .config import AppConfig
+from .db import backup_db, fetch_freshrss_entries, update_summary_links
+from .pdf import download_pdf, extract_pdf_text, select_pdf_context
+from .prompt import build_summary_prompt
+from .publisher import publish_detail, publish_index, write_manifest
+from .state import load_state, save_state
+
+
+def now_iso() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def epoch_days_ago(days: int) -> int:
+    return int((datetime.now(timezone.utc) - timedelta(days=days)).timestamp())
+
+
+def attach_pdf_context(config: AppConfig, paper: Paper) -> None:
+    pdf_dir = config.runtime.state_dir / "pdf"
+    text_dir = config.runtime.state_dir / "pdf-text"
+    text_dir.mkdir(parents=True, exist_ok=True)
+    pdf_path = download_pdf(
+        paper,
+        pdf_dir=pdf_dir,
+        curl_bin=config.runtime.curl_bin,
+        timeout=config.runtime.pdf_timeout_seconds,
+    )
+    text = extract_pdf_text(
+        pdf_path,
+        pdftotext_bin=config.runtime.pdftotext_bin,
+        timeout=config.runtime.pdf_timeout_seconds,
+    )
+    text_path = text_dir / f"{paper.slug}.txt"
+    text_path.write_text(text, encoding="utf-8")
+    context = select_pdf_context(text, config.runtime.pdf_max_chars)
+    paper.pdf_context = context if len(context) >= 2000 else text[: config.runtime.pdf_max_chars]
+    paper.pdf_text_chars = len(text)
+    paper.pdf_context_chars = len(paper.pdf_context)
+    paper.pdf_error = None
+
+
+def select_papers(papers: list[Paper], state: dict[str, object], limit: int, force_id: str | None) -> list[Paper]:
+    records = state.setdefault("papers", {})
+    selected: list[Paper] = []
+    for paper in papers:
+        if force_id and paper.arxiv_id != force_id and paper.base_id != force_id:
+            continue
+        record = records.get(paper.arxiv_id, {}) if isinstance(records, dict) else {}
+        if force_id or record.get("status") != "done":
+            selected.append(paper)
+        if len(selected) >= limit:
+            break
+    return selected
+
+
+def run_once(
+    config: AppConfig,
+    *,
+    limit: int = 1,
+    since_days: int = 7,
+    lookback: int = 1000,
+    force_id: str | None = None,
+    write_freshrss_links: bool = True,
+    use_pdf: bool = True,
+    dry_run: bool = False,
+) -> list[dict[str, object]]:
+    config.runtime.state_dir.mkdir(parents=True, exist_ok=True)
+    config.site.output_dir.mkdir(parents=True, exist_ok=True)
+    state_path = config.runtime.state_dir / "state.json"
+    state = load_state(state_path)
+    rows = fetch_freshrss_entries(
+        config.freshrss.db_path,
+        config.freshrss.category,
+        since_epoch=epoch_days_ago(since_days),
+        limit=lookback,
+    )
+    papers = group_entries(rows)
+    selected = select_papers(papers, state, max(limit, 1), force_id)
+    records = state.setdefault("papers", {})
+    if not isinstance(records, dict):
+        raise RuntimeError("state['papers'] must be a dictionary")
+
+    changed: list[dict[str, object]] = []
+    if dry_run:
+        return [asdict(paper) for paper in selected]
+
+    db_backup_done = False
+    work_dir = config.runtime.state_dir / "work"
+    for paper in selected:
+        record = records.setdefault(paper.arxiv_id, {})
+        record.update(
+            {
+                "arxiv_id": paper.arxiv_id,
+                "title": paper.title,
+                "entry_ids": paper.entry_ids,
+                "feed_names": paper.feed_names,
+                "status": "running",
+                "updated_at": now_iso(),
+            }
+        )
+        save_state(state_path, state)
+
+        if use_pdf:
+            try:
+                attach_pdf_context(config, paper)
+            except Exception as exc:  # noqa: BLE001 - record and fall back to RSS abstract
+                paper.pdf_error = str(exc)
+
+        prompt = build_summary_prompt(paper)
+        markdown = run_codex_summary(
+            command=config.codex.command,
+            reasoning_effort=config.codex.reasoning_effort,
+            prompt=prompt,
+            output_path=work_dir / f"{paper.slug}.summary.md",
+            timeout_seconds=config.codex.timeout_seconds,
+        )
+        generated_at = now_iso()
+        publish_record = publish_detail(
+            paper,
+            markdown,
+            output_dir=config.site.output_dir,
+            public_base_url=config.site.public_base_url,
+            generated_at=generated_at,
+        )
+        record.update(publish_record)
+        record["status"] = "done"
+        record["updated_at"] = now_iso()
+
+        if write_freshrss_links:
+            if not db_backup_done:
+                backup_db(config.freshrss.db_path, config.runtime.state_dir / "db-backups")
+                db_backup_done = True
+            record["freshrss_entries_updated"] = update_summary_links(
+                config.freshrss.db_path,
+                paper.arxiv_id,
+                paper.entry_ids,
+                str(publish_record["url"]),
+            )
+        changed.append(record.copy())
+        save_state(state_path, state)
+        time.sleep(0.1)
+
+    all_done = [item for item in records.values() if isinstance(item, dict) and item.get("status") == "done"]
+    publish_index(all_done, config.site.output_dir, generated_at=now_iso())
+    write_manifest(all_done, config.site.output_dir)
+    save_state(state_path, state)
+    return changed
