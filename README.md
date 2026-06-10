@@ -74,6 +74,7 @@ Use a lock wrapper such as `flock` if your scheduler can overlap runs.
 ## Deployment Notes
 
 - For Synology NAS and FreshRSS Docker setups, see [`docs/synology-freshrss.md`](docs/synology-freshrss.md).
+- For adding RSS subscriptions, grouping feeds, and OPML import, see [`docs/feed-management.md`](docs/feed-management.md).
 - For Reeder/FreshRSS behavior, see [`docs/reeder-workflow.md`](docs/reeder-workflow.md).
 
 ## Development
