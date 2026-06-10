@@ -1,4 +1,4 @@
-from freshrss_arxiv_summarizer.publisher import detail_filename
+from oh_my_rss.publisher import detail_filename
 
 
 def test_detail_filename_includes_summary_hash_to_avoid_stale_caches():

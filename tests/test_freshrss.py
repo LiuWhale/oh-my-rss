@@ -1,4 +1,4 @@
-from freshrss_arxiv_summarizer.freshrss import make_summary_snippet, upsert_summary_snippet
+from oh_my_rss.freshrss import make_summary_snippet, upsert_summary_snippet
 
 
 def test_upsert_summary_snippet_replaces_existing_link():

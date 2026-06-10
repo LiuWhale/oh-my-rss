@@ -1,5 +1,5 @@
-from freshrss_arxiv_summarizer.arxiv import Paper
-from freshrss_arxiv_summarizer.prompt import build_summary_prompt
+from oh_my_rss.arxiv import Paper
+from oh_my_rss.prompt import build_summary_prompt
 
 
 def test_prompt_requires_story_sized_summary_and_mathjax_safe_formula_style():

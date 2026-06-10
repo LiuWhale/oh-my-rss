@@ -34,7 +34,7 @@ files and schedule one run for each category.
 7. Run the summarizer with `--dry-run` first:
 
 ```bash
-freshrss-arxiv-codex run --config config.yaml --dry-run --limit 5
+oh-my-rss run --config config.yaml --dry-run --limit 5
 ```
 
 Reeder will show the FreshRSS categories as folders after the next FreshRSS

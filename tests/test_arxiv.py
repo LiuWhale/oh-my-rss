@@ -1,4 +1,4 @@
-from freshrss_arxiv_summarizer.arxiv import group_entries
+from oh_my_rss.arxiv import group_entries
 
 
 def test_group_entries_deduplicates_same_arxiv_id_across_feeds():

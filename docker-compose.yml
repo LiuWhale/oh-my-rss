@@ -1,7 +1,7 @@
 services:
   summarizer:
     build: .
-    image: freshrss-arxiv-codex-summarizer:local
+    image: oh-my-rss:local
     env_file: .env
     volumes:
       - ./config.yaml:/app/config.yaml:ro

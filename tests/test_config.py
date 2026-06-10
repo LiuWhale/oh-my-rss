@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from freshrss_arxiv_summarizer.config import AppConfig
+from oh_my_rss.config import AppConfig
 
 
 def test_config_loads_yaml_and_expands_paths(tmp_path: Path):

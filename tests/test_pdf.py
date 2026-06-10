@@ -1,4 +1,4 @@
-from freshrss_arxiv_summarizer.pdf import normalize_pdf_text, select_pdf_context
+from oh_my_rss.pdf import normalize_pdf_text, select_pdf_context
 
 
 def test_normalize_pdf_text_joins_hyphenated_line_breaks():

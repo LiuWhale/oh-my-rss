@@ -1,4 +1,4 @@
-"""FreshRSS arXiv Codex Summarizer."""
+"""Oh My RSS."""
 
 __all__ = ["__version__"]
 

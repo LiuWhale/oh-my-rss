@@ -32,7 +32,7 @@ runtime:
 
 
 def build_parser() -> ArgumentParser:
-    parser = ArgumentParser(prog="freshrss-arxiv-codex")
+    parser = ArgumentParser(prog="oh-my-rss")
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init-config", help="write an example config file")

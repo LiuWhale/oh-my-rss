@@ -1,10 +1,14 @@
-# FreshRSS arXiv Codex Summarizer
+# Oh My RSS
 
-Generate Chinese, paper-story summaries for new arXiv papers found in FreshRSS, publish static HTML pages, and optionally write summary links back into FreshRSS so RSS clients such as Reeder can open them.
+RSS-driven reading automation. The first workflow turns arXiv papers found in
+FreshRSS into Chinese paper-story summaries, publishes static HTML pages, and
+optionally writes summary links back into FreshRSS so RSS clients such as Reeder
+can open them.
 
 ## Features
 
-- Reads arXiv entries from a FreshRSS SQLite database.
+- Reads RSS entries from a FreshRSS SQLite database.
+- Detects arXiv papers from RSS titles, links, and content.
 - De-duplicates papers that appear in multiple feeds.
 - Downloads arXiv PDFs and extracts text with `pdftotext`.
 - Calls Codex CLI to generate Chinese summaries with:
@@ -28,24 +32,24 @@ Generate Chinese, paper-story summaries for new arXiv papers found in FreshRSS, 
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-name/freshrss-arxiv-codex-summarizer.git
-cd freshrss-arxiv-codex-summarizer
+git clone https://github.com/your-name/oh-my-rss.git
+cd oh-my-rss
 python3.11 -m venv .venv
 . .venv/bin/activate
 pip install -e ".[dev]"
-freshrss-arxiv-codex init-config --output config.yaml
+oh-my-rss init-config --output config.yaml
 ```
 
 Edit `config.yaml`, then run:
 
 ```bash
-freshrss-arxiv-codex run --config config.yaml --limit 1
+oh-my-rss run --config config.yaml --limit 1
 ```
 
 To preview which papers would be processed without calling Codex:
 
 ```bash
-freshrss-arxiv-codex run --config config.yaml --dry-run --limit 5
+oh-my-rss run --config config.yaml --dry-run --limit 5
 ```
 
 ## Configuration
@@ -66,7 +70,7 @@ The key fields are:
 Run every 10 minutes with cron:
 
 ```cron
-*/10 * * * * cd /opt/freshrss-arxiv-codex-summarizer && . .venv/bin/activate && freshrss-arxiv-codex run --config config.yaml --limit 1 >> state/cron.log 2>&1
+*/10 * * * * cd /opt/oh-my-rss && . .venv/bin/activate && oh-my-rss run --config config.yaml --limit 1 >> state/cron.log 2>&1
 ```
 
 Use a lock wrapper such as `flock` if your scheduler can overlap runs.

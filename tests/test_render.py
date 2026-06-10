@@ -1,4 +1,4 @@
-from freshrss_arxiv_summarizer.render import markdown_to_html, render_detail_html
+from oh_my_rss.render import markdown_to_html, render_detail_html
 
 
 def test_markdown_to_html_renders_code_spans_without_raw_backticks():

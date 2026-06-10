@@ -37,7 +37,7 @@ By default, `run` writes a summary link into each FreshRSS entry it processed. I
 To disable DB writes:
 
 ```bash
-freshrss-arxiv-codex run --config config.yaml --no-freshrss-link
+oh-my-rss run --config config.yaml --no-freshrss-link
 ```
 
 ## Proxy
@@ -56,7 +56,7 @@ Do not commit proxy credentials.
 Use cron or Synology Task Scheduler to run:
 
 ```bash
-cd /path/to/freshrss-arxiv-codex-summarizer
+cd /path/to/oh-my-rss
 . .venv/bin/activate
-flock -n state/run.lock freshrss-arxiv-codex run --config config.yaml --limit 1
+flock -n state/run.lock oh-my-rss run --config config.yaml --limit 1
 ```
