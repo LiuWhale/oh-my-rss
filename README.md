@@ -32,7 +32,7 @@ can open them.
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-name/oh-my-rss.git
+git clone https://github.com/LiuWhale/oh-my-rss.git
 cd oh-my-rss
 python3.11 -m venv .venv
 . .venv/bin/activate
