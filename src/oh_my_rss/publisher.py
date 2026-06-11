@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import shutil
+import unicodedata
 
 from .arxiv import Paper
 from .render import render_detail_html, render_index_html, render_rss_xml
@@ -70,6 +71,60 @@ def publish_feed(
     (output_dir / "feed.xml").write_text(xml, encoding="utf-8")
 
 
+def publish_category_feeds(
+    records: list[dict[str, object]],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> list[dict[str, object]]:
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for record in records:
+        if not record.get("url"):
+            continue
+        feed_names = _unique_strings(record.get("feed_names", []) or [])
+        if not feed_names:
+            feed_names = ["Uncategorized"]
+        for feed_name in feed_names:
+            grouped.setdefault(feed_name, []).append(record)
+
+    categories_dir = output_dir / "categories"
+    categories_dir.mkdir(parents=True, exist_ok=True)
+    used_slugs: dict[str, str] = {}
+    category_records: list[dict[str, object]] = []
+    base_url = public_base_url.rstrip("/")
+
+    for category_name in sorted(grouped):
+        slug = category_slug(category_name)
+        if slug in used_slugs and used_slugs[slug] != category_name:
+            slug = f"{slug}-{hashlib.sha256(category_name.encode('utf-8')).hexdigest()[:8]}"
+        used_slugs[slug] = category_name
+        items = sorted(grouped[category_name], key=lambda item: str(item.get("generated_at", "")), reverse=True)
+        feed_path = f"categories/{slug}.xml"
+        xml = render_rss_xml(
+            items,
+            generated_at=generated_at,
+            public_base_url=public_base_url,
+            title=f"Oh My RSS - {category_name}",
+            description=f"Generated summaries for {category_name}.",
+            feed_path=feed_path,
+        )
+        (categories_dir / f"{slug}.xml").write_text(xml, encoding="utf-8")
+        category_records.append(
+            {
+                "name": category_name,
+                "slug": slug,
+                "url": f"{base_url}/{feed_path}",
+                "count": len(items),
+            }
+        )
+
+    (categories_dir / "index.json").write_text(
+        json.dumps(category_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return category_records
+
+
 def write_manifest(records: list[dict[str, object]], output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "manifest.json").write_text(
@@ -87,3 +142,24 @@ def summary_excerpt(markdown: str, max_chars: int = 500) -> str:
     if len(text) <= max_chars:
         return text
     return text[: max_chars - 1].rstrip() + "..."
+
+
+def category_slug(name: str) -> str:
+    normalized = unicodedata.normalize("NFKD", name)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_text).strip("-")
+    slug = re.sub(r"-+", "-", slug)
+    if slug:
+        return slug[:80].strip("-")
+    return f"category-{hashlib.sha256(name.encode('utf-8')).hexdigest()[:10]}"
+
+
+def _unique_strings(values: list[object]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        text = str(value).strip()
+        if text and text not in seen:
+            seen.add(text)
+            result.append(text)
+    return result

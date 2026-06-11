@@ -36,6 +36,12 @@ The public summary RSS feed will be available at:
 https://your-domain.example/paper-feeds/summaries/feed.xml
 ```
 
+Category-specific feeds will be written under:
+
+```text
+https://your-domain.example/paper-feeds/summaries/categories/
+```
+
 ## FreshRSS Link Back-Writing
 
 By default, `run` writes a summary link into each FreshRSS entry it processed. It first backs up the SQLite DB into `runtime.state_dir/db-backups`.

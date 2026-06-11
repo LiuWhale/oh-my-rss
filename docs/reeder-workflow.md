@@ -23,5 +23,13 @@ Oh My RSS also writes a static RSS feed:
 <site.public_base_url>/feed.xml
 ```
 
-Use this for public readers. They can subscribe to generated summaries without
-connecting to your FreshRSS account.
+It also writes category-specific feeds under:
+
+```text
+<site.public_base_url>/categories/
+```
+
+Use these for public readers. They can subscribe to generated summaries without
+connecting to your FreshRSS account. The all-in-one feed keeps RSS `<category>`
+tags; category-specific feeds work better when a client should show separate
+subscriptions or folders.

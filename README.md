@@ -72,6 +72,8 @@ Each run writes:
 
 - `index.html`: public summary index
 - `feed.xml`: public RSS feed for generated summaries
+- `categories/*.xml`: per-source/category RSS feeds
+- `categories/index.json`: machine-readable category feed list
 - `manifest.json`: machine-readable summary metadata
 
 Users can subscribe to:
@@ -80,7 +82,13 @@ Users can subscribe to:
 <site.public_base_url>/feed.xml
 ```
 
-This feed is static. It lets other people read generated summaries without
+They can also subscribe to category-specific feeds listed in:
+
+```text
+<site.public_base_url>/categories/index.json
+```
+
+These feeds are static. They let other people read generated summaries without
 logging into your FreshRSS account or sharing your read/unread state.
 
 ## Scheduling
