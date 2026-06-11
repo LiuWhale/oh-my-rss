@@ -71,6 +71,7 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     robotics = ElementTree.parse(tmp_path / "categories" / "arxiv-robotics-latest-cs-ro.xml")
     vision = ElementTree.parse(tmp_path / "categories" / "arxiv-vision.xml")
     category_index = tmp_path / "categories" / "index.json"
+    category_opml = tmp_path / "categories" / "opml.xml"
 
     assert robotics.findtext("./channel/title") == "Oh My RSS - arXiv Robotics latest (cs.RO)"
     assert robotics.findtext("./channel/item/title") == "Robot Paper"
@@ -80,3 +81,18 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     assert vision.findtext("./channel/item/title") == "Vision Paper"
     assert [item.text for item in vision.findall("./channel/item/category")] == ["arXiv Vision"]
     assert category_index.exists()
+    assert category_opml.exists()
+
+    opml = ElementTree.parse(category_opml)
+    assert opml.getroot().tag == "opml"
+    assert opml.getroot().attrib["version"] == "2.0"
+    outlines = {outline.attrib["text"]: outline.attrib for outline in opml.findall("./body/outline")}
+    assert outlines["arXiv Robotics latest (cs.RO)"]["type"] == "rss"
+    assert (
+        outlines["arXiv Robotics latest (cs.RO)"]["xmlUrl"]
+        == "https://example.com/summaries/categories/arxiv-robotics-latest-cs-ro.xml"
+    )
+    assert (
+        outlines["arXiv 导航规划 / Navigation"]["xmlUrl"]
+        == "https://example.com/summaries/categories/arxiv-navigation.xml"
+    )

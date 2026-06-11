@@ -74,6 +74,7 @@ Each run writes:
 - `feed.xml`: public RSS feed for generated summaries
 - `categories/*.xml`: per-source/category RSS feeds
 - `categories/index.json`: machine-readable category feed list
+- `categories/opml.xml`: OPML import file for RSS clients
 - `manifest.json`: machine-readable summary metadata
 
 Users can subscribe to:
@@ -82,7 +83,14 @@ Users can subscribe to:
 <site.public_base_url>/feed.xml
 ```
 
-They can also subscribe to category-specific feeds listed in:
+They can also subscribe to category-specific feeds. RSS clients generally do
+not subscribe to JSON directly; use the OPML file for bulk import:
+
+```text
+<site.public_base_url>/categories/opml.xml
+```
+
+Use the JSON file only for integrations that need a machine-readable list:
 
 ```text
 <site.public_base_url>/categories/index.json

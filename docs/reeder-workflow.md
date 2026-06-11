@@ -29,6 +29,12 @@ It also writes category-specific feeds under:
 <site.public_base_url>/categories/
 ```
 
+For bulk import into RSS clients, use:
+
+```text
+<site.public_base_url>/categories/opml.xml
+```
+
 Use these for public readers. They can subscribe to generated summaries without
 connecting to your FreshRSS account. The all-in-one feed intentionally omits
 item-level RSS `<category>` tags so clients do not present one article as coming

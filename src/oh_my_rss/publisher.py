@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import html
 import json
 import re
 import shutil
@@ -128,7 +129,33 @@ def publish_category_feeds(
         json.dumps(category_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    (categories_dir / "opml.xml").write_text(
+        render_category_opml(category_records),
+        encoding="utf-8",
+    )
     return category_records
+
+
+def render_category_opml(category_records: list[dict[str, object]]) -> str:
+    outlines = []
+    for item in category_records:
+        name = str(item["name"])
+        url = str(item["url"])
+        outlines.append(
+            "    "
+            f'<outline text="{_xml_attr(name)}" title="{_xml_attr(name)}" '
+            f'type="rss" xmlUrl="{_xml_attr(url)}" htmlUrl="{_xml_attr(url)}" />'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<opml version="2.0">\n'
+        "  <head>\n"
+        "    <title>Oh My RSS category feeds</title>\n"
+        "  </head>\n"
+        "  <body>\n"
+        + "\n".join(outlines)
+        + "\n  </body>\n</opml>\n"
+    )
 
 
 def write_manifest(records: list[dict[str, object]], output_dir: Path) -> None:
@@ -169,3 +196,7 @@ def _unique_strings(values: list[object]) -> list[str]:
             seen.add(text)
             result.append(text)
     return result
+
+
+def _xml_attr(value: str) -> str:
+    return html.escape(value, quote=True)

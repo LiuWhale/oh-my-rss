@@ -42,6 +42,12 @@ Category-specific feeds will be written under:
 https://your-domain.example/paper-feeds/summaries/categories/
 ```
 
+For bulk import into RSS clients, use the generated OPML file:
+
+```text
+https://your-domain.example/paper-feeds/summaries/categories/opml.xml
+```
+
 ## FreshRSS Link Back-Writing
 
 By default, `run` writes a summary link into each FreshRSS entry it processed. It first backs up the SQLite DB into `runtime.state_dir/db-backups`.
