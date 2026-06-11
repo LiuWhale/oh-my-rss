@@ -66,7 +66,12 @@ def publish_feed(
 ) -> None:
     done = [record for record in records if record.get("url")]
     done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
-    xml = render_rss_xml(done, generated_at=generated_at, public_base_url=public_base_url)
+    xml = render_rss_xml(
+        done,
+        generated_at=generated_at,
+        public_base_url=public_base_url,
+        include_item_categories=False,
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "feed.xml").write_text(xml, encoding="utf-8")
 
@@ -107,6 +112,7 @@ def publish_category_feeds(
             title=f"Oh My RSS - {category_name}",
             description=f"Generated summaries for {category_name}.",
             feed_path=feed_path,
+            item_category=category_name,
         )
         (categories_dir / f"{slug}.xml").write_text(xml, encoding="utf-8")
         category_records.append(

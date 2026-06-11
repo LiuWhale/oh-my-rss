@@ -30,6 +30,7 @@ It also writes category-specific feeds under:
 ```
 
 Use these for public readers. They can subscribe to generated summaries without
-connecting to your FreshRSS account. The all-in-one feed keeps RSS `<category>`
-tags; category-specific feeds work better when a client should show separate
-subscriptions or folders.
+connecting to your FreshRSS account. The all-in-one feed intentionally omits
+item-level RSS `<category>` tags so clients do not present one article as coming
+from several feeds. Use category-specific feeds when a client should show
+separate subscriptions or folders.

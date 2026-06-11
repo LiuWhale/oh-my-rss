@@ -29,6 +29,7 @@ def test_publish_feed_writes_feed_xml(tmp_path):
     assert feed_path.exists()
     root = ElementTree.fromstring(feed_path.read_text(encoding="utf-8"))
     assert root.findtext("channel/item/guid") == "https://example.com/summaries/2606.11184v1.html"
+    assert root.findall("channel/item/category") == []
 
 
 def test_category_slug_prefers_ascii_words_and_falls_back_to_hash():
@@ -73,5 +74,9 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
 
     assert robotics.findtext("./channel/title") == "Oh My RSS - arXiv Robotics latest (cs.RO)"
     assert robotics.findtext("./channel/item/title") == "Robot Paper"
+    assert [item.text for item in robotics.findall("./channel/item/category")] == [
+        "arXiv Robotics latest (cs.RO)"
+    ]
     assert vision.findtext("./channel/item/title") == "Vision Paper"
+    assert [item.text for item in vision.findall("./channel/item/category")] == ["arXiv Vision"]
     assert category_index.exists()
