@@ -14,3 +14,14 @@ Reeder reads FreshRSS through the FreshRSS account. This project does not push d
 After Reeder syncs FreshRSS, the link appears near the top of the article.
 
 Generated detail pages use hash-based filenames. This avoids stale browser or RSS-client caches when the same paper is summarized again with improved prompts.
+
+## Public Summary Feed
+
+Oh My RSS also writes a static RSS feed:
+
+```text
+<site.public_base_url>/feed.xml
+```
+
+Use this for public readers. They can subscribe to generated summaries without
+connecting to your FreshRSS account.

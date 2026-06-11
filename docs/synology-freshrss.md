@@ -30,6 +30,12 @@ site:
 
 The URL must serve files from `output_dir`.
 
+The public summary RSS feed will be available at:
+
+```text
+https://your-domain.example/paper-feeds/summaries/feed.xml
+```
+
 ## FreshRSS Link Back-Writing
 
 By default, `run` writes a summary link into each FreshRSS entry it processed. It first backs up the SQLite DB into `runtime.state_dir/db-backups`.

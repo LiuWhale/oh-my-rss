@@ -18,6 +18,7 @@ can open them.
   - `实验设计及分析`
   - `原文链接`
 - Produces static HTML with MathJax support.
+- Produces a static public RSS feed at `feed.xml`.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
 
@@ -64,6 +65,23 @@ The key fields are:
 - `site.public_base_url`: public URL prefix for generated pages.
 - `codex.command`: command used to invoke Codex CLI.
 - `runtime.state_dir`: state, PDF cache, prompts, logs, and DB backups.
+
+## Public Feed
+
+Each run writes:
+
+- `index.html`: public summary index
+- `feed.xml`: public RSS feed for generated summaries
+- `manifest.json`: machine-readable summary metadata
+
+Users can subscribe to:
+
+```text
+<site.public_base_url>/feed.xml
+```
+
+This feed is static. It lets other people read generated summaries without
+logging into your FreshRSS account or sharing your read/unread state.
 
 ## Scheduling
 

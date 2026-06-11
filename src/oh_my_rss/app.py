@@ -11,7 +11,7 @@ from .config import AppConfig
 from .db import backup_db, fetch_freshrss_entries, update_summary_links
 from .pdf import download_pdf, extract_pdf_text, select_pdf_context
 from .prompt import build_summary_prompt
-from .publisher import publish_detail, publish_index, write_manifest
+from .publisher import publish_detail, publish_feed, publish_index, write_manifest
 from .state import load_state, save_state
 
 
@@ -149,7 +149,14 @@ def run_once(
         time.sleep(0.1)
 
     all_done = [item for item in records.values() if isinstance(item, dict) and item.get("status") == "done"]
-    publish_index(all_done, config.site.output_dir, generated_at=now_iso())
+    generated_at = now_iso()
+    publish_index(all_done, config.site.output_dir, generated_at=generated_at)
+    publish_feed(
+        all_done,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
     write_manifest(all_done, config.site.output_dir)
     save_state(state_path, state)
     return changed
