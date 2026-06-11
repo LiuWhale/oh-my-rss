@@ -224,6 +224,11 @@ def render_rss_xml(
             item_description = f"arXiv: {arxiv_id}"
             if feeds:
                 item_description += f" · 来源：{feeds}"
+        categories = "\n".join(
+            f"      <category>{_xml(category)}</category>"
+            for category in _unique_strings(record.get("feed_names", []) or [])
+        )
+        categories = f"\n{categories}" if categories else ""
         items.append(
             "    <item>\n"
             f"      <title>{_xml(item_title)}</title>\n"
@@ -231,6 +236,7 @@ def render_rss_xml(
             f"      <guid isPermaLink=\"true\">{_xml(item_url)}</guid>\n"
             f"      <description>{_xml(item_description)}</description>\n"
             f"      <pubDate>{_xml(_rss_date(generated))}</pubDate>\n"
+            f"{categories}\n"
             "    </item>"
         )
 
@@ -261,3 +267,14 @@ def _rss_date(value: str) -> str:
 
 def _xml(value: str) -> str:
     return html.escape(value, quote=True)
+
+
+def _unique_strings(values: list[object]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        text = str(value).strip()
+        if text and text not in seen:
+            seen.add(text)
+            result.append(text)
+    return result

@@ -52,3 +52,4 @@ def test_render_rss_xml_outputs_parseable_public_feed():
     assert channel.findtext("link") == "https://example.com/summaries/index.html"
     assert channel.findtext("item/title") == "A & B <Robot>"
     assert channel.findtext("item/link") == "https://example.com/summaries/2606.11184v1.html"
+    assert channel.findtext("item/category") == "Robotics"
