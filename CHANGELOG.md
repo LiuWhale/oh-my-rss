@@ -9,6 +9,9 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish a monthly research radar feed with monthly HTML reports, JSON
+  statistics, direction bar charts, source distribution charts, and animated SVG
+  trend charts.
 - Embed a first-page PNG preview in generated paper summary pages.
 - Document validated IJRR and Soft Robotics OnlineFirst RSS feeds for
   deployments that support generic paper RSS sources.

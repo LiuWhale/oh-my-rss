@@ -1,9 +1,8 @@
 # Oh My RSS
 
-RSS-driven reading automation. The first workflow turns arXiv papers found in
-FreshRSS into Chinese paper-story summaries, publishes static HTML pages, and
-optionally writes summary links back into FreshRSS so RSS clients such as Reeder
-can open them.
+RSS-native AI research radar. Oh My RSS turns research feeds from FreshRSS into
+Chinese paper-story summaries, static public feeds, category feeds, and monthly
+trend reports that RSS clients such as Reeder can subscribe to.
 
 ## Features
 
@@ -20,8 +19,17 @@ can open them.
   - `原文链接`
 - Produces static HTML with MathJax support.
 - Produces a static public RSS feed at `feed.xml`.
+- Produces a monthly research radar feed with trend tables and SVG charts.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
+
+## Project Goal
+
+Oh My RSS is designed to become a self-hosted AI research radar rather than a
+replacement RSS reader. The long-term goal is to let users connect paper feeds,
+conference feeds, journal feeds, lab blogs, and news feeds, then publish a clean
+knowledge stream with AI summaries, research-domain classification, trend
+reports, and RSS-native distribution.
 
 ## Requirements
 
@@ -77,6 +85,9 @@ Each run writes:
 - `categories/*.xml`: per-source/category RSS feeds
 - `categories/index.json`: machine-readable category feed list
 - `categories/opml.xml`: OPML import file for RSS clients
+- `reports/monthly.xml`: monthly research trend report RSS feed
+- `reports/monthly/YYYY-MM.html`: monthly report pages with direction bars,
+  source distribution, animated trend charts, and representative papers
 - `manifest.json`: machine-readable summary metadata
 
 Category feed names are normalized for mixed paper sources: a leading `arXiv `
@@ -101,6 +112,16 @@ Use the JSON file only for integrations that need a machine-readable list:
 ```text
 <site.public_base_url>/categories/index.json
 ```
+
+Monthly trend reports are published as a separate RSS feed:
+
+```text
+<site.public_base_url>/reports/monthly.xml
+```
+
+Each monthly report page includes an animated SVG trend chart, direction bar
+chart, source distribution chart, summary tables, and links back to the
+underlying Codex paper summaries.
 
 These feeds are static. They let other people read generated summaries without
 logging into your FreshRSS account or sharing your read/unread state.

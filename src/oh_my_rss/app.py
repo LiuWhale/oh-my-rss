@@ -4,13 +4,21 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 import time
 
+from .analytics import build_monthly_reports
 from .arxiv import Paper, group_entries
 from .codex import run_codex_summary
 from .config import AppConfig
 from .db import backup_db, fetch_freshrss_entries, update_summary_links
 from .pdf import download_pdf, extract_pdf_text, render_pdf_first_page_preview, select_pdf_context
 from .prompt import build_summary_prompt
-from .publisher import publish_category_feeds, publish_detail, publish_feed, publish_index, write_manifest
+from .publisher import (
+    publish_category_feeds,
+    publish_detail,
+    publish_feed,
+    publish_index,
+    publish_monthly_reports,
+    write_manifest,
+)
 from .state import load_state, save_state
 
 
@@ -171,6 +179,12 @@ def run_once(
     )
     publish_category_feeds(
         all_done,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_monthly_reports(
+        build_monthly_reports(all_done, generated_at=generated_at),
         config.site.output_dir,
         public_base_url=config.site.public_base_url,
         generated_at=generated_at,

@@ -35,6 +35,15 @@ For bulk import into RSS clients, use:
 <site.public_base_url>/categories/opml.xml
 ```
 
+Monthly research trend reports are published as a separate feed:
+
+```text
+<site.public_base_url>/reports/monthly.xml
+```
+
+Each monthly report item links to an HTML report with direction statistics,
+source distribution, trend SVG charts, and representative paper links.
+
 Use these for public readers. They can subscribe to generated summaries without
 connecting to your FreshRSS account. The all-in-one feed intentionally omits
 item-level RSS `<category>` tags so clients do not present one article as coming

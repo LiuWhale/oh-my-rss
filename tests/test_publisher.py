@@ -1,6 +1,13 @@
 from xml.etree import ElementTree
 
-from oh_my_rss.publisher import category_slug, detail_filename, publish_category_feeds, publish_feed
+from oh_my_rss.analytics import build_monthly_reports
+from oh_my_rss.publisher import (
+    category_slug,
+    detail_filename,
+    publish_category_feeds,
+    publish_feed,
+    publish_monthly_reports,
+)
 
 
 def test_detail_filename_includes_summary_hash_to_avoid_stale_caches():
@@ -102,3 +109,57 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
         outlines["导航规划 / Navigation"]["xmlUrl"]
         == "https://example.com/summaries/categories/navigation.xml"
     )
+
+
+def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
+    reports = build_monthly_reports(
+        [
+            {
+                "title": "Humanoid paper",
+                "url": "https://example.com/summaries/humanoid.html",
+                "generated_at": "2026-06-10T18:00:00+08:00",
+                "research_domains": ["Humanoid Robots"],
+                "venue": "arXiv",
+                "summary_excerpt": "A humanoid control paper.",
+            },
+            {
+                "title": "Manipulation paper",
+                "url": "https://example.com/summaries/manipulation.html",
+                "generated_at": "2026-06-11T18:00:00+08:00",
+                "research_domains": ["Manipulation"],
+                "venue": "RAL",
+                "summary_excerpt": "A robot manipulation paper.",
+            },
+        ],
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    published = publish_monthly_reports(
+        reports,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    assert published[0]["url"] == "https://example.com/summaries/reports/monthly/2026-06.html"
+    assert (tmp_path / "reports" / "monthly.xml").exists()
+    assert (tmp_path / "reports" / "monthly" / "2026-06.html").exists()
+    assert (tmp_path / "reports" / "monthly" / "2026-06.json").exists()
+    assert (tmp_path / "reports" / "monthly" / "assets" / "2026-06-direction-bars.svg").exists()
+    assert (tmp_path / "reports" / "monthly" / "assets" / "2026-06-source-donut.svg").exists()
+    assert (tmp_path / "reports" / "monthly" / "assets" / "2026-06-trend-animated.svg").exists()
+
+    root = ElementTree.parse(tmp_path / "reports" / "monthly.xml").getroot()
+    assert root.findtext("channel/title") == "Oh My RSS Monthly Research Radar"
+    assert root.findtext("channel/item/title") == "2026-06 研究趋势月报"
+
+    html = (tmp_path / "reports" / "monthly" / "2026-06.html").read_text(encoding="utf-8")
+    assert "热门方向" in html
+    assert "Humanoid Robots" in html
+    assert "2026-06-trend-animated.svg" in html
+
+    trend_svg = (
+        tmp_path / "reports" / "monthly" / "assets" / "2026-06-trend-animated.svg"
+    ).read_text(encoding="utf-8")
+    assert "{top + chart_height}" not in trend_svg
+    assert "<animate " in trend_svg

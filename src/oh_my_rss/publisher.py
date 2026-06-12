@@ -8,7 +8,15 @@ import re
 import shutil
 import unicodedata
 
+from .analytics import MonthlyReport
 from .arxiv import Paper
+from .reports import (
+    render_direction_bars_svg,
+    render_monthly_report_html,
+    render_monthly_report_json,
+    render_source_donut_svg,
+    render_trend_animated_svg,
+)
 from .render import render_detail_html, render_index_html, render_rss_xml
 
 
@@ -139,6 +147,61 @@ def publish_category_feeds(
         encoding="utf-8",
     )
     return category_records
+
+
+def publish_monthly_reports(
+    reports: list[MonthlyReport],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> list[dict[str, object]]:
+    reports_root = output_dir / "reports"
+    monthly_dir = reports_root / "monthly"
+    assets_dir = monthly_dir / "assets"
+    monthly_dir.mkdir(parents=True, exist_ok=True)
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    base_url = public_base_url.rstrip("/")
+
+    feed_records: list[dict[str, object]] = []
+    for report in reports[:12]:
+        html_path = monthly_dir / f"{report.month}.html"
+        json_path = monthly_dir / f"{report.month}.json"
+        direction_path = assets_dir / f"{report.month}-direction-bars.svg"
+        source_path = assets_dir / f"{report.month}-source-donut.svg"
+        trend_path = assets_dir / f"{report.month}-trend-animated.svg"
+
+        html_path.write_text(render_monthly_report_html(report), encoding="utf-8")
+        json_path.write_text(render_monthly_report_json(report), encoding="utf-8")
+        direction_path.write_text(render_direction_bars_svg(report), encoding="utf-8")
+        source_path.write_text(render_source_donut_svg(report), encoding="utf-8")
+        trend_path.write_text(render_trend_animated_svg(report), encoding="utf-8")
+
+        url = f"{base_url}/reports/monthly/{report.month}.html"
+        feed_records.append(
+            {
+                "title": report.title,
+                "url": url,
+                "generated_at": report.generated_at,
+                "feed_names": ["Monthly Research Radar"],
+                "summary_excerpt": report.summary,
+                "month": report.month,
+                "total_papers": report.total_papers,
+            }
+        )
+
+    feed_xml = render_rss_xml(
+        feed_records,
+        generated_at=generated_at,
+        public_base_url=public_base_url,
+        title="Oh My RSS Monthly Research Radar",
+        description="Monthly research trend reports generated from Oh My RSS paper summaries.",
+        feed_path="reports/monthly.xml",
+        channel_link=feed_records[0]["url"] if feed_records else f"{base_url}/index.html",
+        include_item_categories=False,
+    )
+    reports_root.mkdir(parents=True, exist_ok=True)
+    (reports_root / "monthly.xml").write_text(feed_xml, encoding="utf-8")
+    return feed_records
 
 
 def record_category_names(record: dict[str, object]) -> list[str]:
