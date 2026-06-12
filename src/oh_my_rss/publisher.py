@@ -505,7 +505,7 @@ def render_category_opml(category_records: list[dict[str, object]]) -> str:
         name = str(item["name"])
         url = str(item["url"])
         outlines.append(
-            "    "
+            "      "
             f'<outline text="{_xml_attr(name)}" title="{_xml_attr(name)}" '
             f'type="rss" xmlUrl="{_xml_attr(url)}" htmlUrl="{_xml_attr(url)}" />'
         )
@@ -516,8 +516,10 @@ def render_category_opml(category_records: list[dict[str, object]]) -> str:
         "    <title>Oh My RSS category feeds</title>\n"
         "  </head>\n"
         "  <body>\n"
+        '    <outline text="Oh My RSS 论文分类" title="Oh My RSS 论文分类">\n'
         + "\n".join(outlines)
-        + "\n  </body>\n</opml>\n"
+        + "\n    </outline>\n"
+        "  </body>\n</opml>\n"
     )
 
 

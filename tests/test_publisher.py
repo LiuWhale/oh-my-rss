@@ -130,7 +130,11 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     opml = ElementTree.parse(category_opml)
     assert opml.getroot().tag == "opml"
     assert opml.getroot().attrib["version"] == "2.0"
-    outlines = {outline.attrib["text"]: outline.attrib for outline in opml.findall("./body/outline")}
+    folder = opml.find("./body/outline")
+    assert folder is not None
+    assert folder.attrib["text"] == "Oh My RSS 论文分类"
+    assert "type" not in folder.attrib
+    outlines = {outline.attrib["text"]: outline.attrib for outline in folder.findall("./outline")}
     assert outlines["Robotics latest (cs.RO)"]["type"] == "rss"
     assert (
         outlines["Robotics latest (cs.RO)"]["xmlUrl"]
