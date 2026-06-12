@@ -23,6 +23,7 @@ trend reports that RSS clients such as Reeder can subscribe to.
 - Produces static HTML with MathJax support.
 - Produces a static public RSS feed at `feed.xml`.
 - Produces a monthly research radar feed with trend tables and SVG charts.
+- Produces a trending-topic feed with one item per hot research direction.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
 
@@ -91,6 +92,9 @@ Each run writes:
 - `reports/monthly.xml`: monthly research trend report RSS feed
 - `reports/monthly/YYYY-MM.html`: monthly report pages with direction bars,
   source distribution, animated trend charts, and representative papers
+- `reports/trending.xml`: hot research-direction RSS feed
+- `reports/trending/*.html`: direction pages with trend counts, sources, and
+  representative papers
 - `manifest.json`: machine-readable summary metadata
 
 Category feed names are normalized for mixed paper sources: a leading `arXiv `
@@ -129,6 +133,16 @@ Monthly trend reports are published as a separate RSS feed:
 Each monthly report page includes an animated SVG trend chart, direction bar
 chart, source distribution chart, summary tables, and links back to the
 underlying Codex paper summaries.
+
+Hot research directions are also published as their own feed:
+
+```text
+<site.public_base_url>/reports/trending.xml
+```
+
+Each trending-topic item links to a direction page with source counts, recent
+trend counts, representative papers, and links back to the generated paper
+summaries.
 
 These feeds are static. They let other people read generated summaries without
 logging into your FreshRSS account or sharing your read/unread state.

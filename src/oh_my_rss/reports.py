@@ -5,7 +5,7 @@ import html
 import json
 import math
 
-from .analytics import MonthlyReport
+from .analytics import MonthlyReport, TrendingTopic
 from .render import page_css
 
 
@@ -25,6 +25,10 @@ PALETTE = [
 
 def render_monthly_report_json(report: MonthlyReport) -> str:
     return json.dumps(asdict(report), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def render_trending_topic_json(topic: TrendingTopic) -> str:
+    return json.dumps(asdict(topic), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
 def render_monthly_report_html(report: MonthlyReport) -> str:
@@ -112,6 +116,73 @@ def render_monthly_report_html(report: MonthlyReport) -> str:
     <h2>代表论文</h2>
     <table>
       <thead><tr><th>论文</th><th>来源</th><th>方向</th><th>摘要片段</th></tr></thead>
+      <tbody>{paper_rows}</tbody>
+    </table>
+  </article>
+</main>
+</body>
+</html>
+"""
+
+
+def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None) -> str:
+    source_rows = table_rows(
+        [[name, str(count)] for name, count in sorted_counts(topic.source_counts)],
+        empty_text="暂无来源统计。",
+    )
+    trend_rows = table_rows(
+        [[month, str(count)] for month, count in zip(topic.trend_months, topic.trend_counts, strict=True)],
+        empty_text="暂无趋势统计。",
+    )
+    paper_rows = table_rows(
+        [
+            [
+                f'<a href="{_attr(paper.url)}" target="_blank" rel="noopener">{_text(paper.title)}</a>',
+                _text(paper.source),
+                _text(paper.generated_at),
+                _text(paper.summary_excerpt[:220]),
+            ]
+            for paper in topic.papers[:20]
+        ],
+        empty_text="暂无代表论文。",
+        raw_html=True,
+    )
+    json_href = f"{slug or topic_slug_hint(topic.name)}.json"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_text(topic.title)} - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../monthly/{_attr(topic.month)}.html">返回月报</a></p>
+  <article>
+    <h1>{_text(topic.name)}</h1>
+    <div class="meta">热点方向 · 月份：{_text(topic.month)} · 论文：{topic.paper_count} · 环比：{signed_number(topic.growth)} · 热度分：{topic.score:.1f}</div>
+    <p>{_text(topic.summary)}</p>
+    <div class="links">
+      <a href="../trending.xml">订阅热点方向 RSS</a>
+      <a href="{_attr(json_href)}">查看统计 JSON</a>
+    </div>
+
+    <h2>来源分布</h2>
+    <table>
+      <thead><tr><th>来源</th><th>数量</th></tr></thead>
+      <tbody>{source_rows}</tbody>
+    </table>
+
+    <h2>趋势月份</h2>
+    <table>
+      <thead><tr><th>月份</th><th>论文数</th></tr></thead>
+      <tbody>{trend_rows}</tbody>
+    </table>
+
+    <h2>代表论文</h2>
+    <table>
+      <thead><tr><th>论文</th><th>来源</th><th>生成时间</th><th>摘要片段</th></tr></thead>
       <tbody>{paper_rows}</tbody>
     </table>
   </article>
@@ -309,6 +380,25 @@ def signed_number(value: int) -> str:
     if value > 0:
         return f"+{value}"
     return str(value)
+
+
+def topic_slug_hint(name: str) -> str:
+    ascii_text = re_sub_non_ascii(name).lower()
+    slug = "-".join(part for part in ascii_text.split("-") if part)
+    return slug or "topic"
+
+
+def re_sub_non_ascii(value: str) -> str:
+    output = []
+    previous_dash = False
+    for char in value:
+        if char.isascii() and char.isalnum():
+            output.append(char)
+            previous_dash = False
+        elif not previous_dash:
+            output.append("-")
+            previous_dash = True
+    return "".join(output).strip("-")
 
 
 def _text(value: object) -> str:

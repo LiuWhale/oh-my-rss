@@ -44,6 +44,15 @@ Monthly research trend reports are published as a separate feed:
 Each monthly report item links to an HTML report with direction statistics,
 source distribution, trend SVG charts, and representative paper links.
 
+Hot research directions are published separately:
+
+```text
+<site.public_base_url>/reports/trending.xml
+```
+
+Each item represents one currently hot research direction and links to the
+representative papers behind that trend.
+
 Use these for public readers. They can subscribe to generated summaries without
 connecting to your FreshRSS account. The all-in-one feed intentionally omits
 item-level RSS `<category>` tags so clients do not present one article as coming

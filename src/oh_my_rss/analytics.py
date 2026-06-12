@@ -47,6 +47,32 @@ class MonthlyReport:
         return f"{self.month} 共收录 {self.total_papers} 篇论文总结，热门方向包括 {highlights}。"
 
 
+@dataclass(frozen=True)
+class TrendingTopic:
+    name: str
+    month: str
+    generated_at: str
+    paper_count: int
+    growth: int
+    score: float
+    source_counts: dict[str, int]
+    papers: list[PaperReference]
+    trend_months: list[str]
+    trend_counts: list[int]
+
+    @property
+    def title(self) -> str:
+        return f"{self.name} - {self.month} 热点方向"
+
+    @property
+    def summary(self) -> str:
+        growth_text = f"+{self.growth}" if self.growth > 0 else str(self.growth)
+        return (
+            f"{self.month} {self.name} 方向收录 {self.paper_count} 篇论文，"
+            f"环比 {growth_text}，热度分 {self.score:.1f}。"
+        )
+
+
 def build_monthly_reports(
     records: list[dict[str, object]],
     *,
@@ -116,6 +142,86 @@ def build_monthly_reports(
         )
 
     return reports
+
+
+def build_trending_topics(
+    records: list[dict[str, object]],
+    *,
+    generated_at: str,
+    month: str | None = None,
+    months: int = 12,
+    limit: int = 10,
+) -> list[TrendingTopic]:
+    papers_by_month = group_paper_references_by_month(records)
+    if not papers_by_month:
+        return []
+
+    target_month = month or sorted(papers_by_month)[-1]
+    current_papers = papers_by_month.get(target_month, [])
+    if not current_papers:
+        return []
+
+    trend_months = [item for item in sorted(papers_by_month) if item <= target_month][-months:]
+    direction_counts = count_directions(current_papers)
+    previous_counts = count_directions(papers_by_month.get(previous_month_key(target_month), []))
+    source_counts = count_sources(current_papers)
+    direction_growth = {
+        name: count - previous_counts.get(name, 0) for name, count in direction_counts.items()
+    }
+    direction_scores = score_directions(direction_counts, direction_growth, source_counts)
+
+    topic_names = sorted(
+        direction_counts,
+        key=lambda name: (-direction_scores.get(name, 0), -direction_counts[name], name),
+    )[:limit]
+    topics: list[TrendingTopic] = []
+    for name in topic_names:
+        papers = [
+            paper
+            for paper in sorted(current_papers, key=lambda item: item.generated_at, reverse=True)
+            if name in paper.directions
+        ]
+        topics.append(
+            TrendingTopic(
+                name=name,
+                month=target_month,
+                generated_at=generated_at,
+                paper_count=direction_counts[name],
+                growth=direction_growth.get(name, 0),
+                score=direction_scores.get(name, float(direction_counts[name])),
+                source_counts=dict(sorted(count_sources(papers).items())),
+                papers=papers[:20],
+                trend_months=trend_months,
+                trend_counts=[
+                    count_directions(papers_by_month.get(item, [])).get(name, 0)
+                    for item in trend_months
+                ],
+            )
+        )
+    return topics
+
+
+def group_paper_references_by_month(
+    records: list[dict[str, object]],
+) -> dict[str, list[PaperReference]]:
+    papers_by_month: dict[str, list[PaperReference]] = defaultdict(list)
+    for record in records:
+        if not record.get("url"):
+            continue
+        month = record_month(record)
+        if not month:
+            continue
+        papers_by_month[month].append(
+            PaperReference(
+                title=str(record.get("title") or record.get("arxiv_id") or "Untitled paper"),
+                url=str(record["url"]),
+                generated_at=str(record.get("generated_at") or ""),
+                source=record_source(record),
+                directions=record_directions(record),
+                summary_excerpt=str(record.get("summary_excerpt") or ""),
+            )
+        )
+    return papers_by_month
 
 
 def record_month(record: dict[str, object]) -> str:

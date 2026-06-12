@@ -1,4 +1,4 @@
-from oh_my_rss.analytics import build_monthly_reports
+from oh_my_rss.analytics import build_monthly_reports, build_trending_topics
 
 
 def test_build_monthly_reports_counts_directions_sources_and_growth():
@@ -61,3 +61,46 @@ def test_build_monthly_reports_infers_domains_when_record_has_no_research_domain
     assert domains["Robot Learning / Policy"] == 1
     assert domains["Humanoid / Legged Robots"] == 1
     assert "Robotics latest (cs.RO)" not in domains
+
+
+def test_build_trending_topics_ranks_hot_directions_with_representative_papers():
+    records = [
+        {
+            "title": "May manipulation baseline",
+            "url": "https://example.com/summaries/may-manipulation.html",
+            "generated_at": "2026-05-08T10:00:00+08:00",
+            "research_domains": ["Manipulation / Dexterous Hands"],
+            "venue": "arXiv",
+            "summary_excerpt": "Previous manipulation work.",
+        },
+        {
+            "title": "June humanoid manipulation",
+            "url": "https://example.com/summaries/humanoid.html",
+            "generated_at": "2026-06-11T10:00:00+08:00",
+            "research_domains": ["Humanoid / Legged Robots", "Manipulation / Dexterous Hands"],
+            "venue": "RAL",
+            "summary_excerpt": "A humanoid manipulation paper.",
+        },
+        {
+            "title": "June VLA manipulation",
+            "url": "https://example.com/summaries/vla.html",
+            "generated_at": "2026-06-12T10:00:00+08:00",
+            "research_domains": ["Vision-Language-Action", "Manipulation / Dexterous Hands"],
+            "venue": "ICRA",
+            "summary_excerpt": "A VLA manipulation paper.",
+        },
+    ]
+
+    topics = build_trending_topics(records, generated_at="2026-06-12T12:00:00+08:00")
+
+    assert topics[0].name == "Manipulation / Dexterous Hands"
+    assert topics[0].month == "2026-06"
+    assert topics[0].paper_count == 2
+    assert topics[0].growth == 1
+    assert topics[0].source_counts == {"ICRA": 1, "RAL": 1}
+    assert [paper.title for paper in topics[0].papers] == [
+        "June VLA manipulation",
+        "June humanoid manipulation",
+    ]
+    assert topics[0].trend_months == ["2026-05", "2026-06"]
+    assert topics[0].trend_counts == [1, 2]

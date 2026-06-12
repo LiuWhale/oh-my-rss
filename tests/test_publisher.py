@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 
-from oh_my_rss.analytics import build_monthly_reports
+from oh_my_rss.analytics import build_monthly_reports, build_trending_topics
 from oh_my_rss.arxiv import Paper
 from oh_my_rss.publisher import (
     category_slug,
@@ -9,6 +9,7 @@ from oh_my_rss.publisher import (
     publish_category_feeds,
     publish_feed,
     publish_monthly_reports,
+    publish_trending_topics,
 )
 
 
@@ -187,3 +188,59 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
     ).read_text(encoding="utf-8")
     assert "{top + chart_height}" not in trend_svg
     assert "<animate " in trend_svg
+
+
+def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
+    topics = build_trending_topics(
+        [
+            {
+                "title": "Humanoid paper",
+                "url": "https://example.com/summaries/humanoid.html",
+                "generated_at": "2026-06-10T18:00:00+08:00",
+                "research_domains": ["Humanoid / Legged Robots"],
+                "venue": "arXiv",
+                "summary_excerpt": "A humanoid control paper.",
+            },
+            {
+                "title": "Manipulation paper",
+                "url": "https://example.com/summaries/manipulation.html",
+                "generated_at": "2026-06-11T18:00:00+08:00",
+                "research_domains": ["Manipulation / Dexterous Hands"],
+                "venue": "RAL",
+                "summary_excerpt": "A robot manipulation paper.",
+            },
+            {
+                "title": "Dexterous paper",
+                "url": "https://example.com/summaries/dexterous.html",
+                "generated_at": "2026-06-12T18:00:00+08:00",
+                "research_domains": ["Manipulation / Dexterous Hands"],
+                "venue": "ICRA",
+                "summary_excerpt": "A dexterous hand paper.",
+            },
+        ],
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    published = publish_trending_topics(
+        topics,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    assert published[0]["url"].startswith("https://example.com/summaries/reports/trending/")
+    assert (tmp_path / "reports" / "trending.xml").exists()
+    assert (tmp_path / "reports" / "trending" / "index.json").exists()
+    assert (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.html").exists()
+    assert (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.json").exists()
+
+    root = ElementTree.parse(tmp_path / "reports" / "trending.xml").getroot()
+    assert root.findtext("channel/title") == "Oh My RSS Trending Research Topics"
+    assert root.findtext("channel/item/title") == "Manipulation / Dexterous Hands - 2026-06 热点方向"
+
+    html = (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.html").read_text(
+        encoding="utf-8"
+    )
+    assert "热点方向" in html
+    assert "Manipulation paper" in html
+    assert "趋势月份" in html

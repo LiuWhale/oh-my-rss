@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish a trending research-topic feed with one item per hot direction and
+  per-direction pages that link to representative paper summaries.
 - Classify generated paper records into research-domain labels so category feeds
   and monthly reports group by topic before falling back to source feed names.
 - Publish a monthly research radar feed with monthly HTML reports, JSON
