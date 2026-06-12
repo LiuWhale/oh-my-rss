@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Add `oh-my-rss print-cron` to generate a locked cron entry for self-hosted
+  periodic runs.
 - Add `oh-my-rss doctor` to check config loading, FreshRSS DB paths, output
   directories, and required runtime commands before running summaries.
 - Add `oh-my-rss validate-site` to check generated RSS, OPML, JSON, sitemap,

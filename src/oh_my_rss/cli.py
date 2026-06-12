@@ -53,6 +53,16 @@ def build_parser() -> ArgumentParser:
 
     validate = sub.add_parser("validate-site", help="validate generated public site files")
     validate.add_argument("--site-dir", type=Path, default=Path("site"))
+
+    cron = sub.add_parser("print-cron", help="print a flock-protected cron entry")
+    cron.add_argument("--cwd", type=Path, default=Path.cwd())
+    cron.add_argument("--config", type=Path, default=Path("config.yaml"))
+    cron.add_argument("--limit", type=int, default=1)
+    cron.add_argument("--interval-minutes", type=int, default=10)
+    cron.add_argument("--log-path", type=Path, default=Path("state/cron.log"))
+    cron.add_argument("--lock-path", type=Path, default=Path("/tmp/oh-my-rss.lock"))
+    cron.add_argument("--venv", type=Path, default=Path(".venv"))
+    cron.add_argument("--no-venv", action="store_true")
     return parser
 
 
@@ -101,6 +111,24 @@ def main(argv: list[str] | None = None) -> int:
         result = run_doctor(args.config)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
+
+    if args.command == "print-cron":
+        from .scheduling import build_cron_line
+
+        try:
+            line = build_cron_line(
+                cwd=args.cwd,
+                config=args.config,
+                limit=args.limit,
+                interval_minutes=args.interval_minutes,
+                log_path=args.log_path,
+                lock_path=args.lock_path,
+                venv_path=None if args.no_venv else args.venv,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        print(line)
+        return 0
 
     return 2
 

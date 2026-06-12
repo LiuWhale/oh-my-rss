@@ -211,13 +211,26 @@ logging into your FreshRSS account or sharing your read/unread state.
 
 ## Scheduling
 
-Run every 10 minutes with cron:
+Generate a locked cron entry for a 10-minute scheduler:
 
-```cron
-*/10 * * * * cd /opt/oh-my-rss && . .venv/bin/activate && oh-my-rss run --config config.yaml --limit 1 >> state/cron.log 2>&1
+```bash
+oh-my-rss print-cron \
+  --cwd /opt/oh-my-rss \
+  --config config.yaml \
+  --limit 1 \
+  --interval-minutes 10 \
+  --log-path state/cron.log \
+  --venv .venv
 ```
 
-Use a lock wrapper such as `flock` if your scheduler can overlap runs.
+The command prints a cron line like:
+
+```cron
+*/10 * * * * cd /opt/oh-my-rss && . .venv/bin/activate && flock -n /tmp/oh-my-rss.lock oh-my-rss run --config config.yaml --limit 1 >> state/cron.log 2>&1
+```
+
+Paste that line into cron or the equivalent scheduler. Use `--no-venv` if
+`oh-my-rss` is installed on the scheduler's default `PATH`.
 
 ## Deployment Notes
 
