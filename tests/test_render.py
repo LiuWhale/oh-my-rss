@@ -18,6 +18,7 @@ def test_render_detail_html_includes_mathjax_loader():
         feeds=["Robotics"],
         abs_url="https://arxiv.org/abs/2606.11184v1",
         pdf_url="https://arxiv.org/pdf/2606.11184v1",
+        hero_image_url="https://example.com/summaries/assets/2606.11184v1-main.png",
         markdown="# Paper\n\n## Motivation\nText",
         generated_at="2026-06-10T18:00:00+08:00",
     )
@@ -25,6 +26,8 @@ def test_render_detail_html_includes_mathjax_loader():
     assert "MathJax" in html
     assert "tex-chtml.js" in html
     assert "2606.11184v1" in html
+    assert '<figure class="hero-image">' in html
+    assert 'src="https://example.com/summaries/assets/2606.11184v1-main.png"' in html
 
 
 def test_render_rss_xml_outputs_parseable_public_feed():

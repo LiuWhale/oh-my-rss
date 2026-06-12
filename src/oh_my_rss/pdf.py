@@ -149,3 +149,37 @@ def extract_pdf_text(pdf_path: Path, pdftotext_bin: str, timeout: int) -> str:
     if len(text) < 2000:
         raise RuntimeError(f"extracted PDF text is too short: {len(text)} chars")
     return text
+
+
+def render_pdf_first_page_preview(
+    pdf_path: Path,
+    output_dir: Path,
+    public_base_url: str,
+    slug: str,
+    *,
+    zoom: float = 1.6,
+) -> str:
+    try:
+        import pymupdf
+    except ModuleNotFoundError:  # pragma: no cover - compatibility for older PyMuPDF imports
+        import fitz as pymupdf
+
+    assets_dir = output_dir / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    image_name = f"{slug}-main.png"
+    image_path = assets_dir / image_name
+
+    doc = pymupdf.open(pdf_path)
+    try:
+        if doc.page_count < 1:
+            raise RuntimeError(f"PDF has no pages: {pdf_path}")
+        page = doc.load_page(0)
+        matrix = pymupdf.Matrix(zoom, zoom)
+        pixmap = page.get_pixmap(matrix=matrix, alpha=False)
+        pixmap.save(image_path)
+    finally:
+        doc.close()
+
+    if image_path.stat().st_size < 1024:
+        raise RuntimeError(f"rendered preview image is too small: {image_path}")
+    return f"{public_base_url.rstrip('/')}/assets/{image_name}"

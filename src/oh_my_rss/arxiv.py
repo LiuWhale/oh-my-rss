@@ -26,6 +26,8 @@ class Paper:
     pdf_text_chars: int | None = None
     pdf_context_chars: int | None = None
     pdf_error: str | None = None
+    hero_image_url: str = ""
+    hero_image_error: str | None = None
 
     @property
     def base_id(self) -> str:

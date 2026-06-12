@@ -27,6 +27,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         feeds=paper.feed_names,
         abs_url=paper.abs_url,
         pdf_url=paper.pdf_url,
+        hero_image_url=paper.hero_image_url,
         markdown=markdown,
         generated_at=generated_at,
     )
@@ -48,6 +49,8 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         "pdf_text_chars": paper.pdf_text_chars,
         "pdf_context_chars": paper.pdf_context_chars,
         "pdf_error": paper.pdf_error,
+        "hero_image_url": paper.hero_image_url,
+        "hero_image_error": paper.hero_image_error,
     }
 
 

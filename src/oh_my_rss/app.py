@@ -8,7 +8,7 @@ from .arxiv import Paper, group_entries
 from .codex import run_codex_summary
 from .config import AppConfig
 from .db import backup_db, fetch_freshrss_entries, update_summary_links
-from .pdf import download_pdf, extract_pdf_text, select_pdf_context
+from .pdf import download_pdf, extract_pdf_text, render_pdf_first_page_preview, select_pdf_context
 from .prompt import build_summary_prompt
 from .publisher import publish_category_feeds, publish_detail, publish_feed, publish_index, write_manifest
 from .state import load_state, save_state
@@ -44,6 +44,17 @@ def attach_pdf_context(config: AppConfig, paper: Paper) -> None:
     paper.pdf_text_chars = len(text)
     paper.pdf_context_chars = len(paper.pdf_context)
     paper.pdf_error = None
+    try:
+        paper.hero_image_url = render_pdf_first_page_preview(
+            pdf_path,
+            output_dir=config.site.output_dir,
+            public_base_url=config.site.public_base_url,
+            slug=paper.slug,
+        )
+        paper.hero_image_error = None
+    except Exception as exc:  # noqa: BLE001 - image preview is optional
+        paper.hero_image_url = ""
+        paper.hero_image_error = str(exc)
 
 
 def select_papers(papers: list[Paper], state: dict[str, object], limit: int, force_id: str | None) -> list[Paper]:
@@ -101,6 +112,8 @@ def run_once(
                 "title": paper.title,
                 "entry_ids": paper.entry_ids,
                 "feed_names": paper.feed_names,
+                "hero_image_url": paper.hero_image_url,
+                "hero_image_error": paper.hero_image_error,
                 "status": "running",
                 "updated_at": now_iso(),
             }

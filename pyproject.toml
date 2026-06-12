@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Oh My RSS contributors" }]
 keywords = ["freshrss", "arxiv", "codex", "rss", "papers", "summarization"]
-dependencies = ["PyYAML>=6.0"]
+dependencies = ["PyMuPDF>=1.24", "PyYAML>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]

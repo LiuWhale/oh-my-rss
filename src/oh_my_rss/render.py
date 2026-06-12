@@ -89,6 +89,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .meta { color: #5d6673; font-size: 14px; margin-bottom: 18px; }
 .links { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 24px; }
 .links a, .back { display: inline-block; border: 1px solid #d7dde4; border-radius: 6px; padding: 6px 10px; text-decoration: none; background: #fbfcfd; }
+.hero-image { margin: 18px 0 26px; }
+.hero-image img { display: block; width: 100%; max-height: 680px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+.hero-image figcaption { color: #687281; font-size: 13px; margin-top: 6px; }
 .paper-list { list-style: none; padding: 0; margin: 18px 0 0; }
 .paper-list li { padding: 16px 0; border-top: 1px solid #edf0f2; }
 .paper-title { font-weight: 650; }
@@ -101,6 +104,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   code { background: #222b36; border-color: #344050; }
   .meta, .paper-meta { color: #aab4c0; }
   .links a, .back { background: #1d2530; border-color: #374151; }
+  .hero-image img { background: #fff; border-color: #344050; }
 }
 """
 
@@ -130,11 +134,20 @@ def render_detail_html(
     feeds: list[str],
     abs_url: str,
     pdf_url: str,
+    hero_image_url: str = "",
     markdown: str,
     generated_at: str,
 ) -> str:
     summary_html = markdown_to_html(markdown)
     feed_text = ", ".join(feeds) if feeds else "FreshRSS"
+    hero_html = ""
+    if hero_image_url:
+        hero_html = (
+            '<figure class="hero-image">'
+            f'<img src="{html.escape(hero_image_url, quote=True)}" alt="论文首页主图">'
+            "<figcaption>论文首页预览</figcaption>"
+            "</figure>"
+        )
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -152,6 +165,7 @@ def render_detail_html(
       <a href="{html.escape(abs_url)}" target="_blank" rel="noopener">arXiv 页面</a>
       <a href="{html.escape(pdf_url)}" target="_blank" rel="noopener">PDF</a>
     </div>
+    {hero_html}
     {summary_html}
   </article>
 </main>

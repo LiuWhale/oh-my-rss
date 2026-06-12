@@ -11,6 +11,7 @@ can open them.
 - Detects arXiv papers from RSS titles, links, and content.
 - De-duplicates papers that appear in multiple feeds.
 - Downloads arXiv PDFs and extracts text with `pdftotext`.
+- Renders a first-page PNG preview and embeds it in the Codex summary page.
 - Calls Codex CLI to generate Chinese summaries with:
   - `Motivation`
   - `Contribution`
@@ -28,6 +29,7 @@ can open them.
 - FreshRSS using SQLite
 - `curl`
 - `pdftotext` from Poppler
+- PyMuPDF, installed automatically as a Python dependency
 - Codex CLI authenticated on the machine running the job
 
 ## Quick Start
