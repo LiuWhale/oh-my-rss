@@ -43,6 +43,7 @@ Keep a Changelog. Version tags use semantic versioning.
   trend charts.
 - Embed a first-page PNG preview in generated paper summary pages.
 - Document validated IJRR and Soft Robotics OnlineFirst RSS feeds.
+- Build source and wheel distributions in CI to catch packaging regressions.
 
 ### Changed
 
@@ -63,6 +64,8 @@ Keep a Changelog. Version tags use semantic versioning.
   because preview mode does not download PDFs.
 - Keep the runtime `oh_my_rss.__version__` aligned with the package metadata
   version.
+- Use an SPDX license string in `pyproject.toml` to avoid setuptools license
+  metadata deprecation warnings.
 
 ## [0.1.2] - 2026-06-11
 

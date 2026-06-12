@@ -9,6 +9,7 @@ def test_github_actions_runs_lint_and_tests():
 
     assert "ruff check ." in workflow
     assert "pytest -q" in workflow
+    assert "python -m build" in workflow
 
 
 def test_package_description_matches_generic_research_feed_scope():
@@ -17,6 +18,19 @@ def test_package_description_matches_generic_research_feed_scope():
     description = metadata["project"]["description"]
     assert "research feeds" in description
     assert "arXiv" not in description
+
+
+def test_dev_dependencies_include_package_build_tool():
+    metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    dev_dependencies = metadata["project"]["optional-dependencies"]["dev"]
+    assert any(item.startswith("build>=") for item in dev_dependencies)
+
+
+def test_package_license_uses_spdx_string():
+    metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    assert metadata["project"]["license"] == "MIT"
 
 
 def test_runtime_version_matches_package_metadata():
