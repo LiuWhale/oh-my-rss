@@ -33,6 +33,7 @@ trend reports that RSS clients such as Reeder can subscribe to.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
 - Prints a starter OPML bundle for common paper feeds so a new FreshRSS
   deployment can start quickly.
+- Validates OPML feed URLs before importing them into FreshRSS.
 
 ## Project Goal
 
@@ -92,7 +93,13 @@ To generate a starter OPML file for FreshRSS paper subscriptions:
 oh-my-rss print-starter-opml --output starter-paper-feeds.opml
 ```
 
-Import that OPML into FreshRSS, then set `freshrss.category` to the imported
+Validate it before importing:
+
+```bash
+oh-my-rss validate-opml --opml starter-paper-feeds.opml
+```
+
+Then import that OPML into FreshRSS and set `freshrss.category` to the imported
 paper category.
 
 ## Configuration

@@ -36,6 +36,7 @@ Generate a FreshRSS import file on the machine where Oh My RSS is installed:
 
 ```bash
 oh-my-rss print-starter-opml --category 论文 --output starter-paper-feeds.opml
+oh-my-rss validate-opml --opml starter-paper-feeds.opml
 ```
 
 Import `starter-paper-feeds.opml` in FreshRSS subscription management. Keep the

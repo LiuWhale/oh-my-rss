@@ -58,8 +58,16 @@ oh-my-rss print-starter-opml --category 论文 --output starter-paper-feeds.opml
 ```
 
 The generated OPML includes validated arXiv research categories plus IJRR and
-Soft Robotics OnlineFirst feeds. Import it into FreshRSS, refresh the category,
-then run:
+Soft Robotics OnlineFirst feeds. Validate it before importing:
+
+```bash
+oh-my-rss validate-opml --opml starter-paper-feeds.opml
+```
+
+Use `--no-network` when you only want to check that the OPML is parseable and
+contains feed URLs.
+
+Import the OPML into FreshRSS, refresh the category, then run:
 
 ```bash
 oh-my-rss run --config config.yaml --dry-run --limit 5
@@ -101,7 +109,8 @@ project:
 
 1. Open the feed's original website and look for its RSS or Atom link.
 2. Prefer official feeds over third-party scraping services.
-3. Test the URL from the machine running FreshRSS:
+3. Test the URL from the machine running FreshRSS, or put the candidate URLs
+   into an OPML file and run `oh-my-rss validate-opml`.
 
 ```bash
 curl -L --max-time 20 "https://example.com/feed.xml" | head

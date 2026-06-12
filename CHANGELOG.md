@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Add `oh-my-rss validate-opml` to parse OPML files and optionally check each
+  feed URL over the network before importing into FreshRSS.
 - Add `oh-my-rss print-starter-opml` to generate a FreshRSS import bundle with
   validated starter paper feeds.
 - Support generic paper RSS entries by accepting DOI and article-page links in

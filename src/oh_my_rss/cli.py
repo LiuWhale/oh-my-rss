@@ -67,6 +67,11 @@ def build_parser() -> ArgumentParser:
     starter = sub.add_parser("print-starter-opml", help="print a FreshRSS starter OPML")
     starter.add_argument("--category", default="论文")
     starter.add_argument("--output", type=Path)
+
+    validate_opml = sub.add_parser("validate-opml", help="validate OPML feed URLs")
+    validate_opml.add_argument("--opml", type=Path, required=True)
+    validate_opml.add_argument("--timeout", type=int, default=20)
+    validate_opml.add_argument("--no-network", action="store_true")
     return parser
 
 
@@ -144,6 +149,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(opml, end="")
         return 0
+
+    if args.command == "validate-opml":
+        from .feed_validation import validate_opml_file
+
+        result = validate_opml_file(
+            args.opml,
+            timeout_seconds=args.timeout,
+            check_network=not args.no_network,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
 
     return 2
 
