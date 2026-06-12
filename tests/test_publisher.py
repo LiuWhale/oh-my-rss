@@ -33,11 +33,16 @@ def test_publish_feed_writes_feed_xml(tmp_path):
 
 
 def test_category_slug_prefers_ascii_words_and_falls_back_to_hash():
-    assert category_slug("arXiv 导航规划 / Navigation") == "arxiv-navigation"
+    assert category_slug("导航规划 / Navigation") == "navigation"
     assert category_slug("机器人").startswith("category-")
 
 
 def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
+    stale_categories = tmp_path / "categories"
+    stale_categories.mkdir()
+    (stale_categories / "arxiv-robotics-latest-cs-ro.xml").write_text("old", encoding="utf-8")
+    (stale_categories / "arxiv-navigation.xml").write_text("old", encoding="utf-8")
+    (stale_categories / "arxiv-vision.xml").write_text("old", encoding="utf-8")
     records = [
         {
             "title": "Robot Paper",
@@ -63,23 +68,24 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     )
 
     assert {item["slug"] for item in categories} == {
-        "arxiv-robotics-latest-cs-ro",
-        "arxiv-navigation",
-        "arxiv-vision",
+        "robotics-latest-cs-ro",
+        "navigation",
+        "vision",
     }
 
-    robotics = ElementTree.parse(tmp_path / "categories" / "arxiv-robotics-latest-cs-ro.xml")
-    vision = ElementTree.parse(tmp_path / "categories" / "arxiv-vision.xml")
+    robotics = ElementTree.parse(tmp_path / "categories" / "robotics-latest-cs-ro.xml")
+    vision = ElementTree.parse(tmp_path / "categories" / "vision.xml")
     category_index = tmp_path / "categories" / "index.json"
     category_opml = tmp_path / "categories" / "opml.xml"
 
-    assert robotics.findtext("./channel/title") == "Oh My RSS - arXiv Robotics latest (cs.RO)"
+    assert robotics.findtext("./channel/title") == "Oh My RSS - Robotics latest (cs.RO)"
     assert robotics.findtext("./channel/item/title") == "Robot Paper"
-    assert [item.text for item in robotics.findall("./channel/item/category")] == [
-        "arXiv Robotics latest (cs.RO)"
-    ]
+    assert [item.text for item in robotics.findall("./channel/item/category")] == ["Robotics latest (cs.RO)"]
     assert vision.findtext("./channel/item/title") == "Vision Paper"
-    assert [item.text for item in vision.findall("./channel/item/category")] == ["arXiv Vision"]
+    assert [item.text for item in vision.findall("./channel/item/category")] == ["Vision"]
+    assert not (tmp_path / "categories" / "arxiv-robotics-latest-cs-ro.xml").exists()
+    assert not (tmp_path / "categories" / "arxiv-navigation.xml").exists()
+    assert not (tmp_path / "categories" / "arxiv-vision.xml").exists()
     assert category_index.exists()
     assert category_opml.exists()
 
@@ -87,12 +93,12 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     assert opml.getroot().tag == "opml"
     assert opml.getroot().attrib["version"] == "2.0"
     outlines = {outline.attrib["text"]: outline.attrib for outline in opml.findall("./body/outline")}
-    assert outlines["arXiv Robotics latest (cs.RO)"]["type"] == "rss"
+    assert outlines["Robotics latest (cs.RO)"]["type"] == "rss"
     assert (
-        outlines["arXiv Robotics latest (cs.RO)"]["xmlUrl"]
-        == "https://example.com/summaries/categories/arxiv-robotics-latest-cs-ro.xml"
+        outlines["Robotics latest (cs.RO)"]["xmlUrl"]
+        == "https://example.com/summaries/categories/robotics-latest-cs-ro.xml"
     )
     assert (
-        outlines["arXiv 导航规划 / Navigation"]["xmlUrl"]
-        == "https://example.com/summaries/categories/arxiv-navigation.xml"
+        outlines["导航规划 / Navigation"]["xmlUrl"]
+        == "https://example.com/summaries/categories/navigation.xml"
     )

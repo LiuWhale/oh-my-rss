@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 import time
 
 from .arxiv import Paper, group_entries

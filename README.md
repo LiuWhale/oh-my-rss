@@ -77,6 +77,10 @@ Each run writes:
 - `categories/opml.xml`: OPML import file for RSS clients
 - `manifest.json`: machine-readable summary metadata
 
+Category feed names are normalized for mixed paper sources: a leading `arXiv `
+prefix is removed before publishing, and stale `categories/arxiv-*.xml` files
+from older runs are cleaned up.
+
 Users can subscribe to:
 
 ```text

@@ -87,11 +87,11 @@ def publish_category_feeds(
     for record in records:
         if not record.get("url"):
             continue
-        feed_names = _unique_strings(record.get("feed_names", []) or [])
-        if not feed_names:
-            feed_names = ["Uncategorized"]
-        for feed_name in feed_names:
-            grouped.setdefault(feed_name, []).append(record)
+        category_names = record_category_names(record)
+        if not category_names:
+            category_names = ["Uncategorized"]
+        for category_name in category_names:
+            grouped.setdefault(category_name, []).append(record)
 
     categories_dir = output_dir / "categories"
     categories_dir.mkdir(parents=True, exist_ok=True)
@@ -125,6 +125,8 @@ def publish_category_feeds(
             }
         )
 
+    remove_stale_arxiv_category_files(categories_dir, set(used_slugs))
+
     (categories_dir / "index.json").write_text(
         json.dumps(category_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -134,6 +136,24 @@ def publish_category_feeds(
         encoding="utf-8",
     )
     return category_records
+
+
+def record_category_names(record: dict[str, object]) -> list[str]:
+    raw_names = record.get("research_domains") or record.get("feed_names", []) or []
+    return _unique_strings(normalize_category_name(name) for name in raw_names)
+
+
+def normalize_category_name(name: object) -> str:
+    text = str(name).strip()
+    if text.startswith("arXiv "):
+        return text[len("arXiv ") :].strip()
+    return text
+
+
+def remove_stale_arxiv_category_files(categories_dir: Path, active_slugs: set[str]) -> None:
+    for path in categories_dir.glob("arxiv-*.xml"):
+        if path.stem not in active_slugs:
+            path.unlink()
 
 
 def render_category_opml(category_records: list[dict[str, object]]) -> str:
