@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Add `oh-my-rss print-starter-opml` to generate a FreshRSS import bundle with
+  validated starter paper feeds.
 - Support generic paper RSS entries by accepting DOI and article-page links in
   addition to arXiv IDs. Direct PDF links are used when present; otherwise the
   summary falls back to RSS metadata.

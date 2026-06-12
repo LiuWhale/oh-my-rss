@@ -51,7 +51,21 @@ category stored in FreshRSS, so no code change is needed. Update
 For a new deployment, OPML is the easiest way to create feeds and groups.
 Import an OPML file through FreshRSS subscription management.
 
-Minimal example:
+Generate a starter paper-feed bundle:
+
+```bash
+oh-my-rss print-starter-opml --category 论文 --output starter-paper-feeds.opml
+```
+
+The generated OPML includes validated arXiv research categories plus IJRR and
+Soft Robotics OnlineFirst feeds. Import it into FreshRSS, refresh the category,
+then run:
+
+```bash
+oh-my-rss run --config config.yaml --dry-run --limit 5
+```
+
+Minimal OPML shape:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -73,22 +87,6 @@ Minimal example:
         title="arXiv cs.AI"
         xmlUrl="https://export.arxiv.org/rss/cs.AI"
         htmlUrl="https://arxiv.org/list/cs.AI/recent" />
-    </outline>
-    <outline text="中文新闻" title="中文新闻">
-      <outline
-        type="rss"
-        text="BBC News 中文"
-        title="BBC News 中文"
-        xmlUrl="https://feeds.bbci.co.uk/zhongwen/simp/rss.xml"
-        htmlUrl="https://www.bbc.com/zhongwen/simp" />
-    </outline>
-    <outline text="English News" title="English News">
-      <outline
-        type="rss"
-        text="BBC World"
-        title="BBC World"
-        xmlUrl="https://feeds.bbci.co.uk/news/world/rss.xml"
-        htmlUrl="https://www.bbc.com/news/world" />
     </outline>
   </body>
 </opml>
@@ -130,6 +128,8 @@ DOI or article-page links as stable paper IDs:
   `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=ijr`
 - Soft Robotics OnlineFirst:
   `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=srba`
+
+These are included in `oh-my-rss print-starter-opml`.
 
 ## Research-Domain Labels
 

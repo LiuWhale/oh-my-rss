@@ -63,6 +63,10 @@ def build_parser() -> ArgumentParser:
     cron.add_argument("--lock-path", type=Path, default=Path("/tmp/oh-my-rss.lock"))
     cron.add_argument("--venv", type=Path, default=Path(".venv"))
     cron.add_argument("--no-venv", action="store_true")
+
+    starter = sub.add_parser("print-starter-opml", help="print a FreshRSS starter OPML")
+    starter.add_argument("--category", default="论文")
+    starter.add_argument("--output", type=Path)
     return parser
 
 
@@ -128,6 +132,17 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as exc:
             parser.error(str(exc))
         print(line)
+        return 0
+
+    if args.command == "print-starter-opml":
+        from .starter_opml import render_starter_opml
+
+        opml = render_starter_opml(category=args.category)
+        if args.output:
+            args.output.write_text(opml, encoding="utf-8")
+            print(f"wrote {args.output}")
+        else:
+            print(opml, end="")
         return 0
 
     return 2

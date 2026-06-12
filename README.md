@@ -31,6 +31,8 @@ trend reports that RSS clients such as Reeder can subscribe to.
   policy, humanoid, SLAM, safety filter, and sim-to-real.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
+- Prints a starter OPML bundle for common paper feeds so a new FreshRSS
+  deployment can start quickly.
 
 ## Project Goal
 
@@ -83,6 +85,15 @@ To validate generated public site files before publishing or after a run:
 ```bash
 oh-my-rss validate-site --site-dir ./site
 ```
+
+To generate a starter OPML file for FreshRSS paper subscriptions:
+
+```bash
+oh-my-rss print-starter-opml --output starter-paper-feeds.opml
+```
+
+Import that OPML into FreshRSS, then set `freshrss.category` to the imported
+paper category.
 
 ## Configuration
 

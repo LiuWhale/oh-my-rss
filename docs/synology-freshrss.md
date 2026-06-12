@@ -30,6 +30,17 @@ site:
 
 The URL must serve files from `output_dir`.
 
+## Starter Feeds
+
+Generate a FreshRSS import file on the machine where Oh My RSS is installed:
+
+```bash
+oh-my-rss print-starter-opml --category 论文 --output starter-paper-feeds.opml
+```
+
+Import `starter-paper-feeds.opml` in FreshRSS subscription management. Keep the
+generated paper feeds in the same category as `freshrss.category`.
+
 The public summary RSS feed will be available at:
 
 ```text
