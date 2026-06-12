@@ -53,6 +53,13 @@ def test_runtime_version_matches_package_metadata():
     assert oh_my_rss.__version__ == metadata["project"]["version"]
 
 
+def test_changelog_contains_current_package_version():
+    metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+
+    assert f"## [{metadata['project']['version']}]" in changelog
+
+
 def test_env_example_documents_compose_runtime_variables():
     env_example = Path(".env.example").read_text(encoding="utf-8")
 

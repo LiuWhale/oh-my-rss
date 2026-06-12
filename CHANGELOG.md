@@ -7,6 +7,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-12
+
 ### Added
 
 - Add `oh-my-rss validate-opml` to parse OPML files and optionally check each
