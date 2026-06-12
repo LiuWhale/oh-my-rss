@@ -55,6 +55,14 @@ For simple monitoring or support checks, use:
 <site.public_base_url>/status.json
 ```
 
+For crawler discovery and link previews that inspect standard site metadata,
+Oh My RSS also publishes:
+
+```text
+<site.public_base_url>/robots.txt
+<site.public_base_url>/sitemap.xml
+```
+
 Monthly research trend reports are published as a separate feed:
 
 ```text

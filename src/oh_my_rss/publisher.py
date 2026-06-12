@@ -248,6 +248,36 @@ def publish_status(
     )
 
 
+def publish_site_discovery(
+    records: list[dict[str, object]],
+    *,
+    monthly_reports: list[MonthlyReport],
+    trending_topics: list[TrendingTopic],
+    keyword_trends: list[KeywordTrend],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base_url = public_base_url.rstrip("/")
+    sitemap_url = f"{base_url}/sitemap.xml"
+    (output_dir / "robots.txt").write_text(
+        "User-agent: *\n"
+        "Allow: /\n"
+        f"Sitemap: {sitemap_url}\n",
+        encoding="utf-8",
+    )
+    urls = sitemap_url_records(
+        records,
+        monthly_reports=monthly_reports,
+        trending_topics=trending_topics,
+        keyword_trends=keyword_trends,
+        public_base_url=public_base_url,
+        generated_at=generated_at,
+    )
+    (output_dir / "sitemap.xml").write_text(render_sitemap_xml(urls), encoding="utf-8")
+
+
 def publish_monthly_reports(
     reports: list[MonthlyReport],
     output_dir: Path,
@@ -547,6 +577,72 @@ def feed_directory_records(category_records: list[dict[str, object]], public_bas
         for item in sorted(category_records, key=lambda record: str(record["name"]))
     )
     return records
+
+
+def sitemap_url_records(
+    records: list[dict[str, object]],
+    *,
+    monthly_reports: list[MonthlyReport],
+    trending_topics: list[TrendingTopic],
+    keyword_trends: list[KeywordTrend],
+    public_base_url: str,
+    generated_at: str,
+) -> list[dict[str, str]]:
+    base_url = public_base_url.rstrip("/")
+    urls: dict[str, str] = {f"{base_url}/index.html": generated_at}
+
+    for record in records:
+        if record.get("url"):
+            urls[str(record["url"])] = str(record.get("generated_at") or generated_at)
+
+    for report in monthly_reports:
+        urls[f"{base_url}/reports/monthly/{report.month}.html"] = report.generated_at
+
+    used_topic_slugs: dict[str, str] = {}
+    for topic in trending_topics:
+        slug = unique_slug(topic.name, used_topic_slugs)
+        urls[f"{base_url}/reports/trending/{slug}.html"] = topic.generated_at
+
+    used_keyword_slugs: dict[str, str] = {}
+    for trend in keyword_trends:
+        slug = unique_slug(trend.keyword, used_keyword_slugs)
+        urls[f"{base_url}/reports/keywords/{slug}.html"] = trend.generated_at
+
+    return [
+        {"loc": loc, "lastmod": sitemap_date(lastmod)}
+        for loc, lastmod in sorted(urls.items())
+    ]
+
+
+def render_sitemap_xml(urls: list[dict[str, str]]) -> str:
+    rows = [
+        "  <url>\n"
+        f"    <loc>{_xml_attr(item['loc'])}</loc>\n"
+        f"    <lastmod>{_xml_attr(item['lastmod'])}</lastmod>\n"
+        "  </url>"
+        for item in urls
+    ]
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(rows)
+        + "\n</urlset>\n"
+    )
+
+
+def unique_slug(name: str, used_slugs: dict[str, str]) -> str:
+    slug = category_slug(name)
+    if slug in used_slugs and used_slugs[slug] != name:
+        slug = f"{slug}-{hashlib.sha256(name.encode('utf-8')).hexdigest()[:8]}"
+    used_slugs[slug] = name
+    return slug
+
+
+def sitemap_date(value: str) -> str:
+    text = str(value or "").strip()
+    if len(text) >= 10 and re.match(r"^\d{4}-\d{2}-\d{2}", text):
+        return text[:10]
+    return ""
 
 
 def write_manifest(records: list[dict[str, object]], output_dir: Path) -> None:

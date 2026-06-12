@@ -93,6 +93,8 @@ Each run writes:
   points
 - `status.json`: machine-readable service status summary with summary counts,
   category counts, report counts, latest summary, and public feed URLs
+- `robots.txt` and `sitemap.xml`: crawler discovery files for the public index,
+  generated summary pages, monthly reports, hot directions, and hot keywords
 - `opml.xml`: complete OPML import file for the main feed, category feeds,
   monthly report feed, hot direction feed, and hot keyword feed
 - `categories/*.xml`: per-source/category RSS feeds
@@ -153,6 +155,13 @@ For monitoring or lightweight health checks, use:
 
 ```text
 <site.public_base_url>/status.json
+```
+
+For crawler discovery, each run also writes:
+
+```text
+<site.public_base_url>/robots.txt
+<site.public_base_url>/sitemap.xml
 ```
 
 Monthly trend reports are published as a separate RSS feed:

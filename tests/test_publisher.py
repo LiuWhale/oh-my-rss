@@ -12,6 +12,7 @@ from oh_my_rss.publisher import (
     publish_feed_directory,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_site_discovery,
     publish_status,
     publish_subscription_opml,
     publish_trending_topics,
@@ -426,3 +427,70 @@ def test_publish_status_writes_public_service_health_summary(tmp_path):
     assert data["feeds"]["feed_directory"] == "https://example.com/summaries/feeds.json"
     assert data["feeds"]["subscription_opml"] == "https://example.com/summaries/opml.xml"
     assert data["feeds"]["keywords"] == "https://example.com/summaries/reports/keywords.xml"
+
+
+def test_publish_site_discovery_writes_robots_and_sitemap(tmp_path):
+    records = [
+        {
+            "title": "Paper",
+            "url": "https://example.com/summaries/paper.html",
+            "generated_at": "2026-06-11T10:00:00+08:00",
+        }
+    ]
+    monthly_reports = build_monthly_reports(
+        [
+            {
+                "title": "Paper",
+                "url": "https://example.com/summaries/paper.html",
+                "generated_at": "2026-06-11T10:00:00+08:00",
+                "research_domains": ["Vision-Language-Action"],
+            }
+        ],
+        generated_at="2026-06-12T15:50:00+08:00",
+    )
+    trending_topics = build_trending_topics(
+        [
+            {
+                "title": "Paper",
+                "url": "https://example.com/summaries/paper.html",
+                "generated_at": "2026-06-11T10:00:00+08:00",
+                "research_domains": ["Vision-Language-Action"],
+            }
+        ],
+        generated_at="2026-06-12T15:50:00+08:00",
+    )
+    keyword_trends = build_keyword_trends(
+        [
+            {
+                "title": "VLA paper",
+                "url": "https://example.com/summaries/paper.html",
+                "generated_at": "2026-06-11T10:00:00+08:00",
+                "research_domains": ["Vision-Language-Action"],
+            }
+        ],
+        generated_at="2026-06-12T15:50:00+08:00",
+    )
+
+    publish_site_discovery(
+        records,
+        monthly_reports=monthly_reports,
+        trending_topics=trending_topics,
+        keyword_trends=keyword_trends,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T15:50:00+08:00",
+    )
+
+    robots = (tmp_path / "robots.txt").read_text(encoding="utf-8")
+    assert "User-agent: *" in robots
+    assert "Sitemap: https://example.com/summaries/sitemap.xml" in robots
+
+    root = ElementTree.parse(tmp_path / "sitemap.xml").getroot()
+    namespace = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    urls = [item.text for item in root.findall("./sm:url/sm:loc", namespace)]
+
+    assert "https://example.com/summaries/index.html" in urls
+    assert "https://example.com/summaries/paper.html" in urls
+    assert "https://example.com/summaries/reports/monthly/2026-06.html" in urls
+    assert "https://example.com/summaries/reports/trending/vision-language-action.html" in urls
+    assert "https://example.com/summaries/reports/keywords/vla.html" in urls

@@ -19,6 +19,7 @@ from .publisher import (
     publish_index,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_site_discovery,
     publish_status,
     publish_subscription_opml,
     publish_trending_topics,
@@ -228,6 +229,15 @@ def run_once(
     publish_status(
         all_done,
         category_records=category_records,
+        monthly_reports=monthly_reports,
+        trending_topics=trending_topics,
+        keyword_trends=keyword_trends,
+        output_dir=config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_site_discovery(
+        all_done,
         monthly_reports=monthly_reports,
         trending_topics=trending_topics,
         keyword_trends=keyword_trends,

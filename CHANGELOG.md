@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish `robots.txt` and `sitemap.xml` so crawlers can discover the public
+  index, summary pages, monthly reports, hot directions, and hot keywords.
 - Publish `status.json`, a lightweight service status summary for monitoring
   and support checks.
 - Publish `feeds.json`, a machine-readable directory of all public RSS and
