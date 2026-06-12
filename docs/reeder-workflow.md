@@ -29,7 +29,14 @@ It also writes category-specific feeds under:
 <site.public_base_url>/categories/
 ```
 
-For bulk import into RSS clients, use:
+For one-click import of the main summary feed, category feeds, monthly reports,
+hot directions, and hot keywords, use:
+
+```text
+<site.public_base_url>/opml.xml
+```
+
+For category-only bulk import into RSS clients, use:
 
 ```text
 <site.public_base_url>/categories/opml.xml

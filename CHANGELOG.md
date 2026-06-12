@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish a complete OPML subscription bundle for the main summary feed,
+  category feeds, monthly reports, hot directions, and hot keywords.
 - Publish a trending research-keyword feed for terms such as VLA, diffusion
   policy, humanoid, SLAM, safety filter, and sim-to-real.
 - Publish a trending research-topic feed with one item per hot direction and

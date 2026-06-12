@@ -88,9 +88,11 @@ Each run writes:
 
 - `index.html`: public summary index
 - `feed.xml`: public RSS feed for generated summaries
+- `opml.xml`: complete OPML import file for the main feed, category feeds,
+  monthly report feed, hot direction feed, and hot keyword feed
 - `categories/*.xml`: per-source/category RSS feeds
 - `categories/index.json`: machine-readable category feed list
-- `categories/opml.xml`: OPML import file for RSS clients
+- `categories/opml.xml`: category-only OPML import file for RSS clients
 - `reports/monthly.xml`: monthly research trend report RSS feed
 - `reports/monthly/YYYY-MM.html`: monthly report pages with direction bars,
   source distribution, animated trend charts, and representative papers
@@ -117,7 +119,14 @@ Users can subscribe to:
 ```
 
 They can also subscribe to category-specific feeds. RSS clients generally do
-not subscribe to JSON directly; use the OPML file for bulk import:
+not subscribe to JSON directly; use the complete OPML bundle for one-click
+import:
+
+```text
+<site.public_base_url>/opml.xml
+```
+
+Use the category-only OPML file when you only want the topic/source feeds:
 
 ```text
 <site.public_base_url>/categories/opml.xml

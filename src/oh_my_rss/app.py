@@ -18,6 +18,7 @@ from .publisher import (
     publish_index,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_subscription_opml,
     publish_trending_topics,
     write_manifest,
 )
@@ -179,11 +180,16 @@ def run_once(
         public_base_url=config.site.public_base_url,
         generated_at=generated_at,
     )
-    publish_category_feeds(
+    category_records = publish_category_feeds(
         all_done,
         config.site.output_dir,
         public_base_url=config.site.public_base_url,
         generated_at=generated_at,
+    )
+    publish_subscription_opml(
+        category_records,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
     )
     publish_monthly_reports(
         build_monthly_reports(all_done, generated_at=generated_at),

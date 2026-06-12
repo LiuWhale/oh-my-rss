@@ -155,6 +155,18 @@ def publish_category_feeds(
     return category_records
 
 
+def publish_subscription_opml(
+    category_records: list[dict[str, object]],
+    output_dir: Path,
+    public_base_url: str,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "opml.xml").write_text(
+        render_subscription_opml(category_records, public_base_url),
+        encoding="utf-8",
+    )
+
+
 def publish_monthly_reports(
     reports: list[MonthlyReport],
     output_dir: Path,
@@ -365,6 +377,56 @@ def render_category_opml(category_records: list[dict[str, object]]) -> str:
         '<opml version="2.0">\n'
         "  <head>\n"
         "    <title>Oh My RSS category feeds</title>\n"
+        "  </head>\n"
+        "  <body>\n"
+        + "\n".join(outlines)
+        + "\n  </body>\n</opml>\n"
+    )
+
+
+def render_subscription_opml(category_records: list[dict[str, object]], public_base_url: str) -> str:
+    base_url = public_base_url.rstrip("/")
+    feed_records = [
+        {
+            "name": "Oh My RSS - All Summaries",
+            "url": f"{base_url}/feed.xml",
+            "html_url": f"{base_url}/index.html",
+        },
+        {
+            "name": "Oh My RSS - Monthly Research Radar",
+            "url": f"{base_url}/reports/monthly.xml",
+            "html_url": f"{base_url}/reports/monthly.xml",
+        },
+        {
+            "name": "Oh My RSS - Trending Research Topics",
+            "url": f"{base_url}/reports/trending.xml",
+            "html_url": f"{base_url}/reports/trending.xml",
+        },
+        {
+            "name": "Oh My RSS - Trending Research Keywords",
+            "url": f"{base_url}/reports/keywords.xml",
+            "html_url": f"{base_url}/reports/keywords.xml",
+        },
+    ]
+    category_feed_records = [
+        {
+            "name": str(item["name"]),
+            "url": str(item["url"]),
+            "html_url": str(item["url"]),
+        }
+        for item in sorted(category_records, key=lambda record: str(record["name"]))
+    ]
+    outlines = [
+        "    "
+        f'<outline text="{_xml_attr(item["name"])}" title="{_xml_attr(item["name"])}" '
+        f'type="rss" xmlUrl="{_xml_attr(item["url"])}" htmlUrl="{_xml_attr(item["html_url"])}" />'
+        for item in [*feed_records, *category_feed_records]
+    ]
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<opml version="2.0">\n'
+        "  <head>\n"
+        "    <title>Oh My RSS subscription bundle</title>\n"
         "  </head>\n"
         "  <body>\n"
         + "\n".join(outlines)

@@ -10,6 +10,7 @@ from oh_my_rss.publisher import (
     publish_feed,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_subscription_opml,
     publish_trending_topics,
 )
 
@@ -291,3 +292,42 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
     assert "关键词趋势" in html
     assert "Humanoid VLA" in html
     assert "趋势月份" in html
+
+
+def test_publish_subscription_opml_writes_complete_public_feed_bundle(tmp_path):
+    category_records = [
+        {
+            "name": "Vision-Language-Action",
+            "slug": "vision-language-action",
+            "url": "https://example.com/summaries/categories/vision-language-action.xml",
+            "count": 3,
+        }
+    ]
+
+    publish_subscription_opml(
+        category_records,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+    )
+
+    opml_path = tmp_path / "opml.xml"
+    assert opml_path.exists()
+
+    opml = ElementTree.parse(opml_path)
+    assert opml.getroot().tag == "opml"
+    assert opml.findtext("./head/title") == "Oh My RSS subscription bundle"
+    outlines = {outline.attrib["text"]: outline.attrib for outline in opml.findall("./body/outline")}
+
+    assert outlines["Oh My RSS - All Summaries"]["xmlUrl"] == "https://example.com/summaries/feed.xml"
+    assert outlines["Oh My RSS - Monthly Research Radar"]["xmlUrl"] == (
+        "https://example.com/summaries/reports/monthly.xml"
+    )
+    assert outlines["Oh My RSS - Trending Research Topics"]["xmlUrl"] == (
+        "https://example.com/summaries/reports/trending.xml"
+    )
+    assert outlines["Oh My RSS - Trending Research Keywords"]["xmlUrl"] == (
+        "https://example.com/summaries/reports/keywords.xml"
+    )
+    assert outlines["Vision-Language-Action"]["xmlUrl"] == (
+        "https://example.com/summaries/categories/vision-language-action.xml"
+    )
