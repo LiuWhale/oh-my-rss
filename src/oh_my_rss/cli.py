@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         missing = [tool for tool in ("curl", "pdftotext") if shutil.which(tool) is None]
-        if missing and not args.no_pdf:
+        if missing and not args.no_pdf and not args.dry_run:
             parser.error(f"missing required tools for PDF mode: {', '.join(missing)}")
         from .app import run_once
         from .config import AppConfig

@@ -48,11 +48,15 @@ Keep a Changelog. Version tags use semantic versioning.
 
 - Update the Synology installer to print cron entries through
   `oh-my-rss print-cron` instead of carrying a stale hand-written schedule.
+- Make `docker-compose.yml` honor the documented `CONFIG_PATH` environment
+  variable.
 - Normalize mixed-source category feed names by removing the leading `arXiv `
   prefix from public category feeds.
 
 ### Fixed
 
+- Let `oh-my-rss run --dry-run` work without local `curl` or `pdftotext`,
+  because preview mode does not download PDFs.
 - Keep the runtime `oh_my_rss.__version__` aligned with the package metadata
   version.
 

@@ -34,6 +34,13 @@ def test_env_example_documents_compose_runtime_variables():
     assert "RUN_LOOKBACK=1000" in env_example
 
 
+def test_docker_compose_uses_documented_config_path_variable():
+    compose = Path("docker-compose.yml").read_text(encoding="utf-8")
+
+    assert "${CONFIG_PATH:-/app/config.yaml}" in compose
+    assert "CONFIG_PATH=/app/config.yaml" in Path(".env.example").read_text(encoding="utf-8")
+
+
 def test_synology_installer_uses_cron_helper_instead_of_stale_raw_command():
     script = Path("scripts/install-synology.sh").read_text(encoding="utf-8")
 

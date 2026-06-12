@@ -12,7 +12,7 @@ services:
     command:
       - run
       - --config
-      - /app/config.yaml
+      - ${CONFIG_PATH:-/app/config.yaml}
       - --limit
       - ${RUN_LIMIT:-1}
       - --since-days
