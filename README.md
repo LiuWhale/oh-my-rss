@@ -70,6 +70,12 @@ To preview which papers would be processed without calling Codex:
 oh-my-rss run --config config.yaml --dry-run --limit 5
 ```
 
+To validate generated public site files before publishing or after a run:
+
+```bash
+oh-my-rss validate-site --site-dir ./site
+```
+
 ## Configuration
 
 See [`configs/example.yaml`](configs/example.yaml).
@@ -217,6 +223,7 @@ Use a lock wrapper such as `flock` if your scheduler can overlap runs.
 
 ```bash
 PYTHONPATH=src pytest -q
+ruff check .
 ```
 
 ## Security

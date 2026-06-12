@@ -47,6 +47,9 @@ def build_parser() -> ArgumentParser:
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--no-pdf", action="store_true")
     run.add_argument("--no-freshrss-link", action="store_true")
+
+    validate = sub.add_parser("validate-site", help="validate generated public site files")
+    validate.add_argument("--site-dir", type=Path, default=Path("site"))
     return parser
 
 
@@ -81,6 +84,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(changed, ensure_ascii=False, indent=2))
         return 0
+
+    if args.command == "validate-site":
+        from .validation import validate_site_output
+
+        result = validate_site_output(args.site_dir)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
 
     return 2
 
