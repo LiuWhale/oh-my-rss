@@ -174,7 +174,30 @@ def render_detail_html(
 """
 
 
-def render_index_html(records: list[dict[str, object]], generated_at: str) -> str:
+def render_index_html(records: list[dict[str, object]], generated_at: str, public_base_url: str = "") -> str:
+    subscription_links = index_subscription_links(public_base_url)
+    alternate_links = "\n".join(
+        [
+            (
+                f'  <link rel="alternate" type="application/rss+xml" title="{html.escape(item["title"], quote=True)}" '
+                f'href="{html.escape(item["url"], quote=True)}">'
+            )
+            for item in subscription_links
+            if item["type"] == "rss"
+        ]
+        + [
+            (
+                f'  <link rel="alternate" type="text/x-opml" title="{html.escape(item["title"], quote=True)}" '
+                f'href="{html.escape(item["url"], quote=True)}">'
+            )
+            for item in subscription_links
+            if item["type"] == "opml"
+        ]
+    )
+    subscription_html = "".join(
+        f'<a href="{html.escape(item["url"], quote=True)}">{html.escape(item["label"], quote=False)}</a>'
+        for item in subscription_links
+    )
     rows: list[str] = []
     for item in records[:200]:
         url = html.escape(str(item["url"]))
@@ -195,6 +218,7 @@ def render_index_html(records: list[dict[str, object]], generated_at: str) -> st
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>arXiv Codex 中文总结</title>
+{alternate_links}
   <style>{page_css()}</style>
 </head>
 <body>
@@ -202,12 +226,53 @@ def render_index_html(records: list[dict[str, object]], generated_at: str) -> st
   <section class="index">
     <h1>arXiv Codex 中文总结</h1>
     <div class="meta">自动从 FreshRSS 读取 arXiv 新条目，由 Codex CLI 生成中文总结。更新时间：{html.escape(generated_at)}</div>
+    <div class="links">{subscription_html}</div>
     <ul class="paper-list">{''.join(rows)}</ul>
   </section>
 </main>
 </body>
 </html>
 """
+
+
+def index_subscription_links(public_base_url: str) -> list[dict[str, str]]:
+    def url(path: str) -> str:
+        base = public_base_url.rstrip("/")
+        return f"{base}/{path}" if base else path
+
+    return [
+        {"label": "全部总结 RSS", "title": "Oh My RSS", "type": "rss", "url": url("feed.xml")},
+        {
+            "label": "完整 OPML",
+            "title": "Oh My RSS subscription bundle",
+            "type": "opml",
+            "url": url("opml.xml"),
+        },
+        {
+            "label": "分类 OPML",
+            "title": "Oh My RSS category feeds",
+            "type": "opml",
+            "url": url("categories/opml.xml"),
+        },
+        {
+            "label": "月报 RSS",
+            "title": "Oh My RSS Monthly Research Radar",
+            "type": "rss",
+            "url": url("reports/monthly.xml"),
+        },
+        {
+            "label": "热点方向 RSS",
+            "title": "Oh My RSS Trending Research Topics",
+            "type": "rss",
+            "url": url("reports/trending.xml"),
+        },
+        {
+            "label": "关键词趋势 RSS",
+            "title": "Oh My RSS Trending Research Keywords",
+            "type": "rss",
+            "url": url("reports/keywords.xml"),
+        },
+    ]
 
 
 def render_rss_xml(

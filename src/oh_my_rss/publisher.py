@@ -68,10 +68,15 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
     }
 
 
-def publish_index(records: list[dict[str, object]], output_dir: Path, generated_at: str) -> None:
+def publish_index(
+    records: list[dict[str, object]],
+    output_dir: Path,
+    generated_at: str,
+    public_base_url: str = "",
+) -> None:
     done = [record for record in records if record.get("url")]
     done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
-    html = render_index_html(done, generated_at)
+    html = render_index_html(done, generated_at, public_base_url=public_base_url)
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "index.html").write_text(html, encoding="utf-8")
 

@@ -22,6 +22,7 @@ trend reports that RSS clients such as Reeder can subscribe to.
   - `原文链接`
 - Produces static HTML with MathJax support.
 - Produces a static public RSS feed at `feed.xml`.
+- Exposes RSS and OPML auto-discovery links from the public index page.
 - Produces a monthly research radar feed with trend tables and SVG charts.
 - Produces a trending-topic feed with one item per hot research direction.
 - Produces a trending-keyword feed for specific terms such as VLA, diffusion

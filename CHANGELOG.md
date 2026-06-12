@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Expose RSS and OPML auto-discovery links plus visible subscription links from
+  the public index page.
 - Publish a complete OPML subscription bundle for the main summary feed,
   category feeds, monthly reports, hot directions, and hot keywords.
 - Publish a trending research-keyword feed for terms such as VLA, diffusion

@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 
-from oh_my_rss.render import markdown_to_html, render_detail_html, render_rss_xml
+from oh_my_rss.render import markdown_to_html, render_detail_html, render_index_html, render_rss_xml
 
 
 def test_markdown_to_html_renders_code_spans_without_raw_backticks():
@@ -56,3 +56,22 @@ def test_render_rss_xml_outputs_parseable_public_feed():
     assert channel.findtext("item/title") == "A & B <Robot>"
     assert channel.findtext("item/link") == "https://example.com/summaries/2606.11184v1.html"
     assert channel.findtext("item/category") == "Robotics"
+
+
+def test_render_index_html_exposes_rss_and_opml_discovery_links():
+    html = render_index_html(
+        [],
+        generated_at="2026-06-12T15:10:00+08:00",
+        public_base_url="https://example.com/summaries",
+    )
+
+    assert (
+        '<link rel="alternate" type="application/rss+xml" title="Oh My RSS" '
+        'href="https://example.com/summaries/feed.xml">'
+    ) in html
+    assert (
+        '<link rel="alternate" type="text/x-opml" title="Oh My RSS subscription bundle" '
+        'href="https://example.com/summaries/opml.xml">'
+    ) in html
+    assert '<a href="https://example.com/summaries/opml.xml">完整 OPML</a>' in html
+    assert '<a href="https://example.com/summaries/reports/keywords.xml">关键词趋势 RSS</a>' in html

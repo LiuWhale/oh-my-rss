@@ -173,7 +173,12 @@ def run_once(
 
     all_done = [item for item in records.values() if isinstance(item, dict) and item.get("status") == "done"]
     generated_at = now_iso()
-    publish_index(all_done, config.site.output_dir, generated_at=generated_at)
+    publish_index(
+        all_done,
+        config.site.output_dir,
+        generated_at=generated_at,
+        public_base_url=config.site.public_base_url,
+    )
     publish_feed(
         all_done,
         config.site.output_dir,
