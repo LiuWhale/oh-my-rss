@@ -184,7 +184,7 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
     assert root.findtext("channel/title") == "Oh My RSS Monthly Research Radar"
     assert root.findtext("channel/item/title") == "2026-06 研究趋势月报"
     assert (
-        "查看网页：https://example.com/summaries/reports/monthly/2026-06.html"
+        '<a href="https://example.com/summaries/reports/monthly/2026-06.html">查看网页</a>'
         in (root.findtext("channel/item/description") or "")
     )
 
@@ -257,7 +257,7 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
     assert root.findtext("channel/link") == "https://example.com/summaries/reports/trending/index.html"
     assert root.findtext("channel/item/title") == "Manipulation / Dexterous Hands - 2026-06 热点方向"
     assert (
-        "查看网页：https://example.com/summaries/reports/trending/index.html#topic-manipulation-dexterous-hands"
+        '<a href="https://example.com/summaries/reports/trending/index.html#topic-manipulation-dexterous-hands">查看网页</a>'
         in (root.findtext("channel/item/description") or "")
     )
 
@@ -315,7 +315,7 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
     assert root.findtext("channel/link") == "https://example.com/summaries/reports/keywords/index.html"
     assert root.findtext("channel/item/title") == "VLA - 2026-06 关键词趋势"
     assert (
-        "查看网页：https://example.com/summaries/reports/keywords/index.html#keyword-vla"
+        '<a href="https://example.com/summaries/reports/keywords/index.html#keyword-vla">查看网页</a>'
         in (root.findtext("channel/item/description") or "")
     )
 

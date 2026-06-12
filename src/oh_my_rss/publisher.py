@@ -318,7 +318,7 @@ def publish_monthly_reports(
                 "url": url,
                 "generated_at": report.generated_at,
                 "feed_names": ["Monthly Research Radar"],
-                "summary_excerpt": f"{report.summary}\n\n查看网页：{url}",
+                "summary_excerpt": summary_with_html_link(report.summary, url),
                 "month": report.month,
                 "total_papers": report.total_papers,
             }
@@ -370,7 +370,7 @@ def publish_trending_topics(
             "url": url,
             "generated_at": topic.generated_at,
             "feed_names": ["Trending Research Topics"],
-            "summary_excerpt": f"{topic.summary}\n\n查看网页：{url}",
+            "summary_excerpt": summary_with_html_link(topic.summary, url),
             "name": topic.name,
             "month": topic.month,
             "paper_count": topic.paper_count,
@@ -436,7 +436,7 @@ def publish_keyword_trends(
             "url": url,
             "generated_at": trend.generated_at,
             "feed_names": ["Trending Research Keywords"],
-            "summary_excerpt": f"{trend.summary}\n\n查看网页：{url}",
+            "summary_excerpt": summary_with_html_link(trend.summary, url),
             "keyword": trend.keyword,
             "month": trend.month,
             "paper_count": trend.paper_count,
@@ -493,6 +493,10 @@ def remove_stale_report_detail_pages(report_dir: Path) -> None:
     for path in report_dir.glob("*.html"):
         if path.name != "index.html":
             path.unlink()
+
+
+def summary_with_html_link(summary: str, url: str) -> str:
+    return f'{summary}\n\n<a href="{url}">查看网页</a>'
 
 
 def render_category_opml(category_records: list[dict[str, object]]) -> str:
