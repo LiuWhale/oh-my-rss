@@ -13,6 +13,23 @@ def build_summary_prompt(paper: Paper) -> str:
     )
     pdf_block = paper.pdf_context or "(无 PDF 正文摘录)"
     abstract = paper.abstract or "(FreshRSS 条目没有提供摘要正文)"
+    paper_id = paper.paper_id or paper.arxiv_id
+    pdf_url = paper.pdf_url or "无直接 PDF 链接"
+    if paper.source_kind == "arXiv":
+        source_metadata = f"""arXiv ID: {paper.arxiv_id}
+标题: {paper.title}
+作者: {paper.authors or '未知'}
+来源 Feed: {feeds or '未知'}
+arXiv 页面: {paper.abs_url}
+PDF: {pdf_url}"""
+    else:
+        source_metadata = f"""论文 ID: {paper_id}
+来源类型: {paper.source_kind}
+标题: {paper.title}
+作者: {paper.authors or '未知'}
+来源 Feed: {feeds or '未知'}
+原文页面: {paper.abs_url}
+PDF: {pdf_url}"""
     return f"""你是一个严谨的中文科研论文阅读助手。请优先基于下面的 PDF 正文摘录生成论文故事版中文总结，RSS 摘要只作为补充。目标是讲清楚一篇论文的完整故事，而不是罗列所有细节。不要编造正文摘录没有支持的内容。
 
 输出要求：
@@ -28,15 +45,10 @@ def build_summary_prompt(paper: Paper) -> str:
 - 公式最多保留 1 个，而且只有在它是理解方法主线所必需时才保留。保留公式时必须使用标准 LaTeX display math：`$$ ... $$`；不要用反引号包公式，不要使用 Unicode 数学符号，如 ∇、⊙、Ẑ，应写成 `\\nabla`、`\\odot`、`\\hat{{Z}}` 等标准 LaTeX。
 - 若公式不是必要，请用自然语言解释机制。
 - 如果 PDF 摘录仍缺某些细节，写“PDF 摘录未覆盖该细节”。
-- 原文链接中列出 arXiv 页面和 PDF。
+- 原文链接中列出原文页面和 PDF（如果有）。
 
 论文元数据：
-arXiv ID: {paper.arxiv_id}
-标题: {paper.title}
-作者: {paper.authors or '未知'}
-来源 Feed: {feeds or '未知'}
-arXiv 页面: {paper.abs_url}
-PDF: {paper.pdf_url}
+{source_metadata}
 PDF 提取状态: {pdf_note}
 
 RSS 摘要（补充）：

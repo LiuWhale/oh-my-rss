@@ -116,11 +116,15 @@ curl -L --max-time 20 "https://example.com/feed.xml" | head
 For arXiv categories, prefer `https://export.arxiv.org/rss/<category>`, for
 example `https://export.arxiv.org/rss/cs.RO`.
 
+For non-arXiv sources, Oh My RSS accepts entries with DOI links or ordinary
+paper page links. If a direct `.pdf` URL is present in the RSS entry, the runner
+will try to extract PDF text. Otherwise it falls back to the RSS title, authors,
+and abstract.
+
 ## Validated Robotics Journal Feeds
 
-The default package workflow detects arXiv IDs from FreshRSS entries. Use these
-non-arXiv journal feeds only with a deployment that also supports generic paper
-RSS sources, such as the NAS deployment script:
+The default package workflow supports these non-arXiv journal feeds by using
+DOI or article-page links as stable paper IDs:
 
 - IJRR OnlineFirst:
   `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=ijr`

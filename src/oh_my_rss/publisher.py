@@ -40,6 +40,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         feeds=paper.feed_names,
         abs_url=paper.abs_url,
         pdf_url=paper.pdf_url,
+        source_label=paper.source_kind,
         hero_image_url=paper.hero_image_url,
         markdown=markdown,
         generated_at=generated_at,
@@ -50,6 +51,10 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
     shutil.copyfile(detail_path, stable_path)
     return {
         "arxiv_id": paper.arxiv_id,
+        "paper_id": paper.paper_id or paper.arxiv_id,
+        "source_kind": paper.source_kind,
+        "source_url": paper.abs_url,
+        "pdf_url": paper.pdf_url,
         "title": paper.title,
         "url": f"{public_base_url.rstrip('/')}/{name}",
         "detail_name": name,

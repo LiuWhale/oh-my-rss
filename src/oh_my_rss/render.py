@@ -134,6 +134,7 @@ def render_detail_html(
     feeds: list[str],
     abs_url: str,
     pdf_url: str,
+    source_label: str = "arXiv",
     hero_image_url: str = "",
     markdown: str,
     generated_at: str,
@@ -148,6 +149,10 @@ def render_detail_html(
             "<figcaption>论文首页预览</figcaption>"
             "</figure>"
         )
+    page_label = "arXiv 页面" if source_label == "arXiv" else "原文页面"
+    pdf_link = ""
+    if pdf_url:
+        pdf_link = f'<a href="{html.escape(pdf_url)}" target="_blank" rel="noopener">PDF</a>'
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -160,10 +165,10 @@ def render_detail_html(
 <main>
   <p><a class="back" href="./index.html">返回总结索引</a></p>
   <article>
-    <div class="meta">arXiv: {html.escape(arxiv_id)} · 生成时间：{html.escape(generated_at)}<br>来源：{html.escape(feed_text)}</div>
+    <div class="meta">{html.escape(source_label)}: {html.escape(arxiv_id)} · 生成时间：{html.escape(generated_at)}<br>来源：{html.escape(feed_text)}</div>
     <div class="links">
-      <a href="{html.escape(abs_url)}" target="_blank" rel="noopener">arXiv 页面</a>
-      <a href="{html.escape(pdf_url)}" target="_blank" rel="noopener">PDF</a>
+      <a href="{html.escape(abs_url)}" target="_blank" rel="noopener">{page_label}</a>
+      {pdf_link}
     </div>
     {hero_html}
     {summary_html}
@@ -202,13 +207,14 @@ def render_index_html(records: list[dict[str, object]], generated_at: str, publi
     for item in records[:200]:
         url = html.escape(str(item["url"]))
         title = html.escape(str(item["title"]))
-        arxiv_id = html.escape(str(item["arxiv_id"]))
+        paper_id = html.escape(str(item.get("paper_id") or item.get("arxiv_id") or ""))
+        source_label = html.escape(record_source_label(item))
         created = html.escape(str(item.get("generated_at", "")))
         feeds = ", ".join(item.get("feed_names", []) or [])
         suffix = f" · {html.escape(feeds)}" if feeds else ""
         rows.append(
             f'<li><div class="paper-title"><a href="{url}">{title}</a></div>'
-            f'<div class="paper-meta">arXiv: {arxiv_id} · {created}{suffix}</div></li>'
+            f'<div class="paper-meta">{source_label}: {paper_id} · {created}{suffix}</div></li>'
         )
     if not rows:
         rows.append("<li>还没有生成论文总结。</li>")
@@ -217,15 +223,15 @@ def render_index_html(records: list[dict[str, object]], generated_at: str, publi
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>arXiv Codex 中文总结</title>
+  <title>Oh My RSS 中文总结</title>
 {alternate_links}
   <style>{page_css()}</style>
 </head>
 <body>
 <main>
   <section class="index">
-    <h1>arXiv Codex 中文总结</h1>
-    <div class="meta">自动从 FreshRSS 读取 arXiv 新条目，由 Codex CLI 生成中文总结。更新时间：{html.escape(generated_at)}</div>
+    <h1>Oh My RSS 中文总结</h1>
+    <div class="meta">自动从 FreshRSS 读取论文 RSS 条目，由 Codex CLI 生成中文总结。更新时间：{html.escape(generated_at)}</div>
     <div class="links">{subscription_html}</div>
     <ul class="paper-list">{''.join(rows)}</ul>
   </section>
@@ -297,14 +303,15 @@ def render_rss_xml(
     for record in done[:200]:
         item_title = str(record.get("title") or record.get("arxiv_id") or "Untitled paper")
         item_url = str(record["url"])
-        arxiv_id = str(record.get("arxiv_id") or "")
+        paper_id = str(record.get("paper_id") or record.get("arxiv_id") or "")
+        source_label = record_source_label(record)
         generated = str(record.get("generated_at") or generated_at)
         feeds = ", ".join(record.get("feed_names", []) or [])
         summary_excerpt = str(record.get("summary_excerpt") or "").strip()
         if summary_excerpt:
             item_description = summary_excerpt
         else:
-            item_description = f"arXiv: {arxiv_id}"
+            item_description = f"{source_label}: {paper_id}"
             if feeds:
                 item_description += f" · 来源：{feeds}"
         if item_category:
@@ -364,3 +371,17 @@ def _unique_strings(values: list[object]) -> list[str]:
             seen.add(text)
             result.append(text)
     return result
+
+
+def record_source_label(record: dict[str, object]) -> str:
+    source_kind = str(record.get("source_kind") or "").strip()
+    if source_kind:
+        return source_kind
+    paper_id = str(record.get("paper_id") or record.get("arxiv_id") or "")
+    if paper_id.startswith("doi:"):
+        return "DOI"
+    if paper_id.startswith("url:"):
+        return "RSS"
+    if paper_id:
+        return "arXiv"
+    return "Paper"

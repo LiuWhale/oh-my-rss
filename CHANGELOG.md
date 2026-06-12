@@ -9,6 +9,9 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Support generic paper RSS entries by accepting DOI and article-page links in
+  addition to arXiv IDs. Direct PDF links are used when present; otherwise the
+  summary falls back to RSS metadata.
 - Add `oh-my-rss print-cron` to generate a locked cron entry for self-hosted
   periodic runs.
 - Add `oh-my-rss doctor` to check config loading, FreshRSS DB paths, output
@@ -35,8 +38,7 @@ Keep a Changelog. Version tags use semantic versioning.
   statistics, direction bar charts, source distribution charts, and animated SVG
   trend charts.
 - Embed a first-page PNG preview in generated paper summary pages.
-- Document validated IJRR and Soft Robotics OnlineFirst RSS feeds for
-  deployments that support generic paper RSS sources.
+- Document validated IJRR and Soft Robotics OnlineFirst RSS feeds.
 
 ### Changed
 

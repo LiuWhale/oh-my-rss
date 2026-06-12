@@ -60,7 +60,8 @@ oh-my-rss run --config config.yaml --no-freshrss-link
 
 ## Proxy
 
-If your NAS needs a proxy for arXiv or Codex, set environment variables before running:
+If your NAS needs a proxy for arXiv, journal sites, PDF downloads, or Codex, set
+environment variables before running:
 
 ```bash
 export http_proxy=http://proxy-host:port
@@ -74,7 +75,13 @@ Do not commit proxy credentials.
 Use cron or Synology Task Scheduler to run:
 
 ```bash
-cd /path/to/oh-my-rss
-. .venv/bin/activate
-flock -n state/run.lock oh-my-rss run --config config.yaml --limit 1
+oh-my-rss print-cron \
+  --cwd /path/to/oh-my-rss \
+  --config config.yaml \
+  --limit 1 \
+  --interval-minutes 10 \
+  --log-path state/cron.log \
+  --venv .venv
 ```
+
+Paste the printed cron line into cron or the Synology scheduler.

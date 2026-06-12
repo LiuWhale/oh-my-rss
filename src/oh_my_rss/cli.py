@@ -38,7 +38,7 @@ def build_parser() -> ArgumentParser:
     init = sub.add_parser("init-config", help="write an example config file")
     init.add_argument("--output", type=Path, default=Path("config.yaml"))
 
-    run = sub.add_parser("run", help="summarize new arXiv papers")
+    run = sub.add_parser("run", help="summarize new research papers")
     run.add_argument("--config", type=Path, default=Path("config.yaml"))
     run.add_argument("--limit", type=int, default=1)
     run.add_argument("--since-days", type=int, default=7)

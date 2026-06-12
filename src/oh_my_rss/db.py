@@ -21,9 +21,6 @@ def fetch_freshrss_entries(db_path: Path, category: str, since_epoch: int, limit
             JOIN category c ON f.category = c.id
             WHERE c.name = ?
               AND e.date >= ?
-              AND (lower(e.guid) LIKE '%arxiv.org%'
-                   OR lower(e.link) LIKE '%arxiv.org%'
-                   OR lower(f.url) LIKE '%arxiv.org%')
             ORDER BY e.date DESC
             LIMIT ?
             """,

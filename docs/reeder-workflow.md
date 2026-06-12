@@ -13,6 +13,9 @@ Reeder reads FreshRSS through the FreshRSS account. This project does not push d
 
 After Reeder syncs FreshRSS, the link appears near the top of the article.
 
+For non-arXiv sources, the same link marker uses a stable `paper_id`, for
+example a `doi:...` ID or a `url:...` hash.
+
 Generated detail pages use hash-based filenames. This avoids stale browser or RSS-client caches when the same paper is summarized again with improved prompts.
 
 ## Public Summary Feed

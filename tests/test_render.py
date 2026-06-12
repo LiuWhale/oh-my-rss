@@ -30,6 +30,23 @@ def test_render_detail_html_includes_mathjax_loader():
     assert 'src="https://example.com/summaries/assets/2606.11184v1-main.png"' in html
 
 
+def test_render_detail_html_supports_non_arxiv_metadata_without_pdf_link():
+    html = render_detail_html(
+        title="Journal Paper",
+        arxiv_id="doi:10.1177/02783649261234567",
+        feeds=["IJRR OnlineFirst"],
+        abs_url="https://journals.example/doi/10.1177/02783649261234567",
+        pdf_url="",
+        source_label="DOI",
+        markdown="# Journal Paper\n\n## Motivation\nText",
+        generated_at="2026-06-10T18:00:00+08:00",
+    )
+
+    assert "DOI: doi:10.1177/02783649261234567" in html
+    assert ">原文页面</a>" in html
+    assert ">PDF</a>" not in html
+
+
 def test_render_rss_xml_outputs_parseable_public_feed():
     xml = render_rss_xml(
         [
@@ -75,3 +92,21 @@ def test_render_index_html_exposes_rss_and_opml_discovery_links():
     ) in html
     assert '<a href="https://example.com/summaries/opml.xml">完整 OPML</a>' in html
     assert '<a href="https://example.com/summaries/reports/keywords.xml">关键词趋势 RSS</a>' in html
+
+
+def test_render_index_html_treats_legacy_arxiv_records_as_arxiv():
+    html = render_index_html(
+        [
+            {
+                "title": "Legacy Paper",
+                "arxiv_id": "2606.11184v1",
+                "url": "https://example.com/summaries/2606.11184v1.html",
+                "generated_at": "2026-06-12T15:10:00+08:00",
+                "feed_names": [],
+            }
+        ],
+        generated_at="2026-06-12T15:10:00+08:00",
+        public_base_url="https://example.com/summaries",
+    )
+
+    assert "arXiv: 2606.11184v1" in html

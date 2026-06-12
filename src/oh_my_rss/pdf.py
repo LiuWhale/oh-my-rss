@@ -107,6 +107,8 @@ def select_pdf_context(text: str, max_chars: int = 60_000) -> str:
 
 def download_pdf(paper: Paper, pdf_dir: Path, curl_bin: str, timeout: int) -> Path:
     pdf_dir.mkdir(parents=True, exist_ok=True)
+    if not paper.pdf_url:
+        raise RuntimeError(f"no direct PDF URL for {paper.paper_id or paper.arxiv_id}")
     pdf_path = pdf_dir / f"{paper.slug}.pdf"
     if pdf_path.exists() and pdf_path.stat().st_size >= 1024:
         return pdf_path

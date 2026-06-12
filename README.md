@@ -7,9 +7,11 @@ trend reports that RSS clients such as Reeder can subscribe to.
 ## Features
 
 - Reads RSS entries from a FreshRSS SQLite database.
-- Detects arXiv papers from RSS titles, links, and content.
+- Detects arXiv, DOI, and generic paper links from RSS titles, links, and
+  content.
 - De-duplicates papers that appear in multiple feeds.
-- Downloads arXiv PDFs and extracts text with `pdftotext`.
+- Downloads direct PDF links when available and extracts text with `pdftotext`;
+  otherwise falls back to the RSS abstract.
 - Renders a first-page PNG preview and embeds it in the Codex summary page.
 - Classifies papers into research-domain labels such as robot learning,
   manipulation, humanoids, VLA, navigation, SLAM, perception, safety/control,
@@ -127,9 +129,10 @@ Category feed names are normalized for mixed paper sources: a leading `arXiv `
 prefix is removed before publishing, and stale `categories/arxiv-*.xml` files
 from older runs are cleaned up.
 
-Newly generated records include `research_domains`. Category feeds and monthly
-reports use those research-domain labels first, then fall back to normalized
-feed names only when no research topic can be inferred.
+Newly generated records include `paper_id`, `source_kind`, and
+`research_domains`. `source_kind` is `arXiv`, `DOI`, or `RSS`. Category feeds
+and monthly reports use research-domain labels first, then fall back to
+normalized feed names only when no research topic can be inferred.
 
 Users can subscribe to:
 
