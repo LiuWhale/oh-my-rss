@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Add `oh-my-rss doctor` to check config loading, FreshRSS DB paths, output
+  directories, and required runtime commands before running summaries.
 - Add `oh-my-rss validate-site` to check generated RSS, OPML, JSON, sitemap,
   and index files before publishing.
 - Publish `robots.txt` and `sitemap.xml` so crawlers can discover the public

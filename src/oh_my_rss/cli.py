@@ -48,6 +48,9 @@ def build_parser() -> ArgumentParser:
     run.add_argument("--no-pdf", action="store_true")
     run.add_argument("--no-freshrss-link", action="store_true")
 
+    doctor = sub.add_parser("doctor", help="check config paths and required commands")
+    doctor.add_argument("--config", type=Path, default=Path("config.yaml"))
+
     validate = sub.add_parser("validate-site", help="validate generated public site files")
     validate.add_argument("--site-dir", type=Path, default=Path("site"))
     return parser
@@ -89,6 +92,13 @@ def main(argv: list[str] | None = None) -> int:
         from .validation import validate_site_output
 
         result = validate_site_output(args.site_dir)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "doctor":
+        from .diagnostics import run_doctor
+
+        result = run_doctor(args.config)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

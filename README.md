@@ -61,6 +61,12 @@ oh-my-rss init-config --output config.yaml
 Edit `config.yaml`, then run:
 
 ```bash
+oh-my-rss doctor --config config.yaml
+```
+
+If the environment checks pass, generate summaries:
+
+```bash
 oh-my-rss run --config config.yaml --limit 1
 ```
 
