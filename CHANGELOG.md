@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Classify generated paper records into research-domain labels so category feeds
+  and monthly reports group by topic before falling back to source feed names.
 - Publish a monthly research radar feed with monthly HTML reports, JSON
   statistics, direction bar charts, source distribution charts, and animated SVG
   trend charts.

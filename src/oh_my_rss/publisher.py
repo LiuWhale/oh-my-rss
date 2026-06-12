@@ -10,6 +10,7 @@ import unicodedata
 
 from .analytics import MonthlyReport
 from .arxiv import Paper
+from .domains import classify_research_domains
 from .reports import (
     render_direction_bars_svg,
     render_monthly_report_html,
@@ -51,6 +52,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         "generated_at": generated_at,
         "summary_sha256": sha,
         "feed_names": paper.feed_names,
+        "research_domains": classify_research_domains(paper),
         "entry_ids": paper.entry_ids,
         "summary_excerpt": summary_excerpt(markdown),
         "summary_source": "pdf" if paper.pdf_context else "rss",

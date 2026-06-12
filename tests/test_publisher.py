@@ -1,9 +1,11 @@
 from xml.etree import ElementTree
 
 from oh_my_rss.analytics import build_monthly_reports
+from oh_my_rss.arxiv import Paper
 from oh_my_rss.publisher import (
     category_slug,
     detail_filename,
+    publish_detail,
     publish_category_feeds,
     publish_feed,
     publish_monthly_reports,
@@ -42,6 +44,28 @@ def test_publish_feed_writes_feed_xml(tmp_path):
 def test_category_slug_prefers_ascii_words_and_falls_back_to_hash():
     assert category_slug("导航规划 / Navigation") == "navigation"
     assert category_slug("机器人").startswith("category-")
+
+
+def test_publish_detail_records_research_domains_for_category_and_monthly_reports(tmp_path):
+    paper = Paper(
+        arxiv_id="2606.11184v1",
+        title="Safe Diffusion Policy for Mobile Manipulation",
+        abstract="A robot learning paper for safe manipulation and navigation.",
+        feed_names=["arXiv Robotics latest (cs.RO)"],
+    )
+
+    record = publish_detail(
+        paper,
+        "# Summary\n\nSafe robot manipulation.",
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-10T18:00:00+08:00",
+    )
+
+    assert "research_domains" in record
+    assert "Robot Learning / Policy" in record["research_domains"]
+    assert "Manipulation / Dexterous Hands" in record["research_domains"]
+    assert "Robotics latest (cs.RO)" not in record["research_domains"]
 
 
 def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):

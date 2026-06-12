@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import re
 
+from .domains import classify_record_domains
+
 
 @dataclass(frozen=True)
 class PaperReference:
@@ -129,12 +131,14 @@ def record_month(record: dict[str, object]) -> str:
 
 def record_directions(record: dict[str, object]) -> list[str]:
     raw = record.get("research_domains") or record.get("feed_names") or []
-    if isinstance(raw, str):
-        values = [raw]
-    else:
-        values = list(raw) if isinstance(raw, list | tuple | set) else []
-    directions = unique_strings(normalize_direction(item) for item in values)
-    return directions or ["Uncategorized"]
+    if record.get("research_domains"):
+        if isinstance(raw, str):
+            values = [raw]
+        else:
+            values = list(raw) if isinstance(raw, list | tuple | set) else []
+        directions = unique_strings(normalize_direction(item) for item in values)
+        return directions or ["Uncategorized"]
+    return classify_record_domains(record)
 
 
 def record_source(record: dict[str, object]) -> str:

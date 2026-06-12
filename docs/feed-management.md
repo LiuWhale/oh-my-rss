@@ -126,3 +126,23 @@ RSS sources, such as the NAS deployment script:
   `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=ijr`
 - Soft Robotics OnlineFirst:
   `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=srba`
+
+## Research-Domain Labels
+
+Generated summary records include `research_domains` so category feeds and
+monthly reports group papers by topic rather than only by source feed. The
+built-in rule set recognizes common robotics and AI directions, including:
+
+- Robot Learning / Policy
+- Manipulation / Dexterous Hands
+- Humanoid / Legged Robots
+- Vision-Language-Action
+- Navigation / Planning
+- SLAM / Mapping / Localization
+- 3D Vision / Perception
+- Safety / Control
+- Embodied AI / Foundation Models
+- Benchmark / Dataset / Evaluation
+
+If no research-domain keyword is matched, Oh My RSS falls back to normalized
+feed names such as `Machine Learning (cs.LG)`.

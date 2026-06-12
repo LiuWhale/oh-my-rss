@@ -41,3 +41,23 @@ def test_build_monthly_reports_counts_directions_sources_and_growth():
     assert june.direction_growth["Robot Learning"] == 0
     assert june.top_papers[0].title == "June manipulation paper"
     assert june.trend_months == ["2026-05", "2026-06"]
+
+
+def test_build_monthly_reports_infers_domains_when_record_has_no_research_domains():
+    reports = build_monthly_reports(
+        [
+            {
+                "title": "Humanoid Diffusion Policy for Mobile Manipulation",
+                "url": "https://example.com/summaries/humanoid.html",
+                "generated_at": "2026-06-11T10:00:00+08:00",
+                "feed_names": ["arXiv Robotics latest (cs.RO)"],
+                "summary_excerpt": "A robot learning system for humanoid manipulation.",
+            },
+        ],
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    domains = reports[0].direction_counts
+    assert domains["Robot Learning / Policy"] == 1
+    assert domains["Humanoid / Legged Robots"] == 1
+    assert "Robotics latest (cs.RO)" not in domains
