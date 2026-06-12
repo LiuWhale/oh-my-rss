@@ -1,4 +1,4 @@
-from oh_my_rss.analytics import build_monthly_reports, build_trending_topics
+from oh_my_rss.analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
 
 
 def test_build_monthly_reports_counts_directions_sources_and_growth():
@@ -104,3 +104,46 @@ def test_build_trending_topics_ranks_hot_directions_with_representative_papers()
     ]
     assert topics[0].trend_months == ["2026-05", "2026-06"]
     assert topics[0].trend_counts == [1, 2]
+
+
+def test_build_keyword_trends_extracts_specific_research_terms_and_growth():
+    records = [
+        {
+            "title": "May Diffusion Policy for Dexterous Manipulation",
+            "url": "https://example.com/summaries/may-dp.html",
+            "generated_at": "2026-05-08T10:00:00+08:00",
+            "research_domains": ["Manipulation / Dexterous Hands"],
+            "venue": "arXiv",
+            "summary_excerpt": "Previous diffusion policy baseline.",
+        },
+        {
+            "title": "VLA Diffusion Policy for Humanoid Manipulation",
+            "url": "https://example.com/summaries/vla-dp.html",
+            "generated_at": "2026-06-11T10:00:00+08:00",
+            "research_domains": ["Vision-Language-Action", "Humanoid / Legged Robots"],
+            "venue": "RAL",
+            "summary_excerpt": "A vision-language-action model with diffusion policy.",
+        },
+        {
+            "title": "Humanoid VLA for Safety Filter Evaluation",
+            "url": "https://example.com/summaries/humanoid-vla.html",
+            "generated_at": "2026-06-12T10:00:00+08:00",
+            "research_domains": ["Safety / Control", "Vision-Language-Action"],
+            "venue": "ICRA",
+            "summary_excerpt": "A safety filter benchmark for humanoid VLA systems.",
+        },
+    ]
+
+    trends = build_keyword_trends(records, generated_at="2026-06-12T12:00:00+08:00")
+
+    assert trends[0].keyword == "VLA"
+    assert trends[0].month == "2026-06"
+    assert trends[0].paper_count == 2
+    assert trends[0].growth == 2
+    assert trends[0].source_counts == {"ICRA": 1, "RAL": 1}
+    assert [paper.title for paper in trends[0].papers] == [
+        "Humanoid VLA for Safety Filter Evaluation",
+        "VLA Diffusion Policy for Humanoid Manipulation",
+    ]
+    assert trends[0].trend_months == ["2026-05", "2026-06"]
+    assert trends[0].trend_counts == [0, 2]

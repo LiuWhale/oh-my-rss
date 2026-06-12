@@ -8,11 +8,13 @@ import re
 import shutil
 import unicodedata
 
-from .analytics import MonthlyReport, TrendingTopic
+from .analytics import KeywordTrend, MonthlyReport, TrendingTopic
 from .arxiv import Paper
 from .domains import classify_research_domains
 from .reports import (
     render_direction_bars_svg,
+    render_keyword_trend_html,
+    render_keyword_trend_json,
     render_monthly_report_html,
     render_monthly_report_json,
     render_source_donut_svg,
@@ -266,6 +268,67 @@ def publish_trending_topics(
     )
     reports_root.mkdir(parents=True, exist_ok=True)
     (reports_root / "trending.xml").write_text(feed_xml, encoding="utf-8")
+    return feed_records
+
+
+def publish_keyword_trends(
+    trends: list[KeywordTrend],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> list[dict[str, object]]:
+    reports_root = output_dir / "reports"
+    keywords_dir = reports_root / "keywords"
+    keywords_dir.mkdir(parents=True, exist_ok=True)
+    base_url = public_base_url.rstrip("/")
+    used_slugs: dict[str, str] = {}
+
+    index_records: list[dict[str, object]] = []
+    feed_records: list[dict[str, object]] = []
+    for trend in trends[:20]:
+        slug = category_slug(trend.keyword)
+        if slug in used_slugs and used_slugs[slug] != trend.keyword:
+            slug = f"{slug}-{hashlib.sha256(trend.keyword.encode('utf-8')).hexdigest()[:8]}"
+        used_slugs[slug] = trend.keyword
+
+        html_path = keywords_dir / f"{slug}.html"
+        json_path = keywords_dir / f"{slug}.json"
+        html_path.write_text(render_keyword_trend_html(trend, slug=slug), encoding="utf-8")
+        json_path.write_text(render_keyword_trend_json(trend), encoding="utf-8")
+
+        url = f"{base_url}/reports/keywords/{slug}.html"
+        record = {
+            "title": trend.title,
+            "url": url,
+            "generated_at": trend.generated_at,
+            "feed_names": ["Trending Research Keywords"],
+            "summary_excerpt": trend.summary,
+            "keyword": trend.keyword,
+            "month": trend.month,
+            "paper_count": trend.paper_count,
+            "growth": trend.growth,
+            "score": trend.score,
+            "slug": slug,
+        }
+        index_records.append(record)
+        feed_records.append(record)
+
+    (keywords_dir / "index.json").write_text(
+        json.dumps(index_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    feed_xml = render_rss_xml(
+        feed_records,
+        generated_at=generated_at,
+        public_base_url=public_base_url,
+        title="Oh My RSS Trending Research Keywords",
+        description="Current hot research keywords generated from Oh My RSS paper summaries.",
+        feed_path="reports/keywords.xml",
+        channel_link=feed_records[0]["url"] if feed_records else f"{base_url}/index.html",
+        include_item_categories=False,
+    )
+    reports_root.mkdir(parents=True, exist_ok=True)
+    (reports_root / "keywords.xml").write_text(feed_xml, encoding="utf-8")
     return feed_records
 
 

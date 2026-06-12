@@ -4,7 +4,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 import time
 
-from .analytics import build_monthly_reports, build_trending_topics
+from .analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
 from .arxiv import Paper, group_entries
 from .codex import run_codex_summary
 from .config import AppConfig
@@ -16,6 +16,7 @@ from .publisher import (
     publish_detail,
     publish_feed,
     publish_index,
+    publish_keyword_trends,
     publish_monthly_reports,
     publish_trending_topics,
     write_manifest,
@@ -192,6 +193,12 @@ def run_once(
     )
     publish_trending_topics(
         build_trending_topics(all_done, generated_at=generated_at),
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_keyword_trends(
+        build_keyword_trends(all_done, generated_at=generated_at),
         config.site.output_dir,
         public_base_url=config.site.public_base_url,
         generated_at=generated_at,

@@ -1,6 +1,6 @@
 from xml.etree import ElementTree
 
-from oh_my_rss.analytics import build_monthly_reports, build_trending_topics
+from oh_my_rss.analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
 from oh_my_rss.arxiv import Paper
 from oh_my_rss.publisher import (
     category_slug,
@@ -8,6 +8,7 @@ from oh_my_rss.publisher import (
     publish_detail,
     publish_category_feeds,
     publish_feed,
+    publish_keyword_trends,
     publish_monthly_reports,
     publish_trending_topics,
 )
@@ -243,4 +244,50 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
     )
     assert "热点方向" in html
     assert "Manipulation paper" in html
+    assert "趋势月份" in html
+
+
+def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
+    trends = build_keyword_trends(
+        [
+            {
+                "title": "VLA Diffusion Policy",
+                "url": "https://example.com/summaries/vla.html",
+                "generated_at": "2026-06-10T18:00:00+08:00",
+                "research_domains": ["Vision-Language-Action"],
+                "venue": "arXiv",
+                "summary_excerpt": "A VLA diffusion policy paper.",
+            },
+            {
+                "title": "Humanoid VLA",
+                "url": "https://example.com/summaries/humanoid-vla.html",
+                "generated_at": "2026-06-11T18:00:00+08:00",
+                "research_domains": ["Humanoid / Legged Robots", "Vision-Language-Action"],
+                "venue": "RAL",
+                "summary_excerpt": "A humanoid VLA paper.",
+            },
+        ],
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    published = publish_keyword_trends(
+        trends,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T09:00:00+08:00",
+    )
+
+    assert published[0]["url"] == "https://example.com/summaries/reports/keywords/vla.html"
+    assert (tmp_path / "reports" / "keywords.xml").exists()
+    assert (tmp_path / "reports" / "keywords" / "index.json").exists()
+    assert (tmp_path / "reports" / "keywords" / "vla.html").exists()
+    assert (tmp_path / "reports" / "keywords" / "vla.json").exists()
+
+    root = ElementTree.parse(tmp_path / "reports" / "keywords.xml").getroot()
+    assert root.findtext("channel/title") == "Oh My RSS Trending Research Keywords"
+    assert root.findtext("channel/item/title") == "VLA - 2026-06 关键词趋势"
+
+    html = (tmp_path / "reports" / "keywords" / "vla.html").read_text(encoding="utf-8")
+    assert "关键词趋势" in html
+    assert "Humanoid VLA" in html
     assert "趋势月份" in html

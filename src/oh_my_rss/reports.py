@@ -5,7 +5,7 @@ import html
 import json
 import math
 
-from .analytics import MonthlyReport, TrendingTopic
+from .analytics import KeywordTrend, MonthlyReport, TrendingTopic
 from .render import page_css
 
 
@@ -29,6 +29,10 @@ def render_monthly_report_json(report: MonthlyReport) -> str:
 
 def render_trending_topic_json(topic: TrendingTopic) -> str:
     return json.dumps(asdict(topic), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def render_keyword_trend_json(keyword: KeywordTrend) -> str:
+    return json.dumps(asdict(keyword), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
 def render_monthly_report_html(report: MonthlyReport) -> str:
@@ -183,6 +187,73 @@ def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None)
     <h2>代表论文</h2>
     <table>
       <thead><tr><th>论文</th><th>来源</th><th>生成时间</th><th>摘要片段</th></tr></thead>
+      <tbody>{paper_rows}</tbody>
+    </table>
+  </article>
+</main>
+</body>
+</html>
+"""
+
+
+def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None) -> str:
+    source_rows = table_rows(
+        [[name, str(count)] for name, count in sorted_counts(keyword.source_counts)],
+        empty_text="暂无来源统计。",
+    )
+    trend_rows = table_rows(
+        [[month, str(count)] for month, count in zip(keyword.trend_months, keyword.trend_counts, strict=True)],
+        empty_text="暂无趋势统计。",
+    )
+    paper_rows = table_rows(
+        [
+            [
+                f'<a href="{_attr(paper.url)}" target="_blank" rel="noopener">{_text(paper.title)}</a>',
+                _text(paper.source),
+                _text(", ".join(paper.directions)),
+                _text(paper.summary_excerpt[:220]),
+            ]
+            for paper in keyword.papers[:20]
+        ],
+        empty_text="暂无代表论文。",
+        raw_html=True,
+    )
+    json_href = f"{slug or topic_slug_hint(keyword.keyword)}.json"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_text(keyword.title)} - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../monthly/{_attr(keyword.month)}.html">返回月报</a></p>
+  <article>
+    <h1>{_text(keyword.keyword)}</h1>
+    <div class="meta">关键词趋势 · 月份：{_text(keyword.month)} · 论文：{keyword.paper_count} · 环比：{signed_number(keyword.growth)} · 热度分：{keyword.score:.1f}</div>
+    <p>{_text(keyword.summary)}</p>
+    <div class="links">
+      <a href="../keywords.xml">订阅关键词趋势 RSS</a>
+      <a href="{_attr(json_href)}">查看统计 JSON</a>
+    </div>
+
+    <h2>来源分布</h2>
+    <table>
+      <thead><tr><th>来源</th><th>数量</th></tr></thead>
+      <tbody>{source_rows}</tbody>
+    </table>
+
+    <h2>趋势月份</h2>
+    <table>
+      <thead><tr><th>月份</th><th>论文数</th></tr></thead>
+      <tbody>{trend_rows}</tbody>
+    </table>
+
+    <h2>代表论文</h2>
+    <table>
+      <thead><tr><th>论文</th><th>来源</th><th>方向</th><th>摘要片段</th></tr></thead>
       <tbody>{paper_rows}</tbody>
     </table>
   </article>

@@ -73,6 +73,52 @@ class TrendingTopic:
         )
 
 
+@dataclass(frozen=True)
+class KeywordTrend:
+    keyword: str
+    month: str
+    generated_at: str
+    paper_count: int
+    growth: int
+    score: float
+    source_counts: dict[str, int]
+    papers: list[PaperReference]
+    trend_months: list[str]
+    trend_counts: list[int]
+
+    @property
+    def title(self) -> str:
+        return f"{self.keyword} - {self.month} 关键词趋势"
+
+    @property
+    def summary(self) -> str:
+        growth_text = f"+{self.growth}" if self.growth > 0 else str(self.growth)
+        return (
+            f"{self.month} 关键词 {self.keyword} 出现在 {self.paper_count} 篇论文中，"
+            f"环比 {growth_text}，热度分 {self.score:.1f}。"
+        )
+
+
+KEYWORD_RULES: list[tuple[str, tuple[str, ...]]] = [
+    ("VLA", ("vla", "vision-language-action", "vision language action")),
+    ("Diffusion Policy", ("diffusion policy", "diffusion policies")),
+    ("Humanoid", ("humanoid", "humanoids")),
+    ("SLAM", ("slam", "simultaneous localization")),
+    ("Safety Filter", ("safety filter", "safe filter", "control barrier", "cbf")),
+    ("MPC", ("mpc", "model predictive control")),
+    ("Foundation Model", ("foundation model", "foundation models")),
+    ("LLM", ("llm", "large language model", "large language models")),
+    ("World Model", ("world model", "world models")),
+    ("Dexterous Manipulation", ("dexterous", "dexterous manipulation", "in-hand", "in hand")),
+    ("Imitation Learning", ("imitation learning", "behavior cloning")),
+    ("Reinforcement Learning", ("reinforcement learning", "offline rl", "safe rl")),
+    ("Point Cloud", ("point cloud", "point-cloud")),
+    ("Benchmark", ("benchmark", "dataset", "evaluation", "leaderboard")),
+    ("Sim-to-Real", ("sim-to-real", "sim to real", "domain randomization")),
+]
+KEYWORD_PRIORITY = {keyword: index for index, (keyword, _) in enumerate(KEYWORD_RULES)}
+
+
 def build_monthly_reports(
     records: list[dict[str, object]],
     *,
@@ -201,6 +247,122 @@ def build_trending_topics(
     return topics
 
 
+def build_keyword_trends(
+    records: list[dict[str, object]],
+    *,
+    generated_at: str,
+    month: str | None = None,
+    months: int = 12,
+    limit: int = 12,
+) -> list[KeywordTrend]:
+    papers_by_month = group_keyword_papers_by_month(records)
+    if not papers_by_month:
+        return []
+
+    target_month = month or sorted(papers_by_month)[-1]
+    current_items = papers_by_month.get(target_month, [])
+    if not current_items:
+        return []
+
+    trend_months = [item for item in sorted(papers_by_month) if item <= target_month][-months:]
+    keyword_counts = count_keywords(current_items)
+    previous_counts = count_keywords(papers_by_month.get(previous_month_key(target_month), []))
+    growth = {name: count - previous_counts.get(name, 0) for name, count in keyword_counts.items()}
+    scores = {
+        name: count + max(growth.get(name, 0), 0) * 0.8 + keyword_source_diversity(current_items, name) * 0.2
+        for name, count in keyword_counts.items()
+    }
+    keyword_names = sorted(
+        keyword_counts,
+        key=lambda name: (
+            -scores[name],
+            -keyword_counts[name],
+            KEYWORD_PRIORITY.get(name, len(KEYWORD_PRIORITY)),
+            name,
+        ),
+    )[:limit]
+
+    trends: list[KeywordTrend] = []
+    for name in keyword_names:
+        papers = [
+            paper
+            for paper, keywords in sorted(
+                current_items,
+                key=lambda item: item[0].generated_at,
+                reverse=True,
+            )
+            if name in keywords
+        ]
+        trends.append(
+            KeywordTrend(
+                keyword=name,
+                month=target_month,
+                generated_at=generated_at,
+                paper_count=keyword_counts[name],
+                growth=growth.get(name, 0),
+                score=scores[name],
+                source_counts=dict(sorted(count_sources(papers).items())),
+                papers=papers[:20],
+                trend_months=trend_months,
+                trend_counts=[
+                    count_keywords(papers_by_month.get(item, [])).get(name, 0)
+                    for item in trend_months
+                ],
+            )
+        )
+    return trends
+
+
+def group_keyword_papers_by_month(
+    records: list[dict[str, object]],
+) -> dict[str, list[tuple[PaperReference, list[str]]]]:
+    papers_by_month: dict[str, list[tuple[PaperReference, list[str]]]] = defaultdict(list)
+    for record in records:
+        if not record.get("url"):
+            continue
+        month = record_month(record)
+        if not month:
+            continue
+        paper = PaperReference(
+            title=str(record.get("title") or record.get("arxiv_id") or "Untitled paper"),
+            url=str(record["url"]),
+            generated_at=str(record.get("generated_at") or ""),
+            source=record_source(record),
+            directions=record_directions(record),
+            summary_excerpt=str(record.get("summary_excerpt") or ""),
+        )
+        keywords = extract_keywords_from_record(record)
+        if keywords:
+            papers_by_month[month].append((paper, keywords))
+    return papers_by_month
+
+
+def extract_keywords_from_record(record: dict[str, object]) -> list[str]:
+    text = searchable_text(
+        record.get("title"),
+        record.get("summary_excerpt"),
+        " ".join(str(item) for item in as_list(record.get("research_domains"))),
+        " ".join(str(item) for item in as_list(record.get("feed_names"))),
+    )
+    found = [
+        keyword
+        for keyword, variants in KEYWORD_RULES
+        if any(keyword_variant_matches(text, variant) for variant in variants)
+    ]
+    return unique_strings(found)
+
+
+def count_keywords(items: list[tuple[PaperReference, list[str]]]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for _, keywords in items:
+        counts.update(keywords)
+    return counts
+
+
+def keyword_source_diversity(items: list[tuple[PaperReference, list[str]]], keyword: str) -> int:
+    return len({paper.source for paper, keywords in items if keyword in keywords})
+
+
 def group_paper_references_by_month(
     records: list[dict[str, object]],
 ) -> dict[str, list[PaperReference]]:
@@ -304,6 +466,29 @@ def infer_source(value: str) -> str:
         if needle in upper:
             return label
     return ""
+
+
+def searchable_text(*values: object) -> str:
+    text = " ".join(str(value or "") for value in values)
+    text = re.sub(r"[-_/]+", " ", text.lower())
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def keyword_variant_matches(text: str, variant: str) -> bool:
+    normalized = searchable_text(variant)
+    if not normalized:
+        return False
+    return re.search(rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])", text) is not None
+
+
+def as_list(value: object) -> list[object]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list | tuple | set):
+        return list(value)
+    return [value]
 
 
 def count_directions(papers: list[PaperReference]) -> Counter[str]:

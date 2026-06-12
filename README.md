@@ -24,6 +24,8 @@ trend reports that RSS clients such as Reeder can subscribe to.
 - Produces a static public RSS feed at `feed.xml`.
 - Produces a monthly research radar feed with trend tables and SVG charts.
 - Produces a trending-topic feed with one item per hot research direction.
+- Produces a trending-keyword feed for specific terms such as VLA, diffusion
+  policy, humanoid, SLAM, safety filter, and sim-to-real.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
 
@@ -95,6 +97,9 @@ Each run writes:
 - `reports/trending.xml`: hot research-direction RSS feed
 - `reports/trending/*.html`: direction pages with trend counts, sources, and
   representative papers
+- `reports/keywords.xml`: hot research-keyword RSS feed
+- `reports/keywords/*.html`: keyword pages with trend counts, sources, and
+  representative papers
 - `manifest.json`: machine-readable summary metadata
 
 Category feed names are normalized for mixed paper sources: a leading `arXiv `
@@ -143,6 +148,16 @@ Hot research directions are also published as their own feed:
 Each trending-topic item links to a direction page with source counts, recent
 trend counts, representative papers, and links back to the generated paper
 summaries.
+
+Specific research keywords are published as another RSS feed:
+
+```text
+<site.public_base_url>/reports/keywords.xml
+```
+
+Each keyword item links to a page that tracks term-level trends such as VLA,
+diffusion policy, humanoid, SLAM, safety filter, and sim-to-real across recent
+paper summaries.
 
 These feeds are static. They let other people read generated summaries without
 logging into your FreshRSS account or sharing your read/unread state.

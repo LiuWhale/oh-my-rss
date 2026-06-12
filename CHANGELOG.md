@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish a trending research-keyword feed for terms such as VLA, diffusion
+  policy, humanoid, SLAM, safety filter, and sim-to-real.
 - Publish a trending research-topic feed with one item per hot direction and
   per-direction pages that link to representative paper summaries.
 - Classify generated paper records into research-domain labels so category feeds
