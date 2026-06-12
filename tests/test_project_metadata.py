@@ -39,6 +39,24 @@ def test_docker_compose_uses_documented_config_path_variable():
 
     assert "${CONFIG_PATH:-/app/config.yaml}" in compose
     assert "CONFIG_PATH=/app/config.yaml" in Path(".env.example").read_text(encoding="utf-8")
+    assert "env_file:" not in compose
+
+
+def test_dockerignore_excludes_local_state_and_secret_files():
+    dockerignore = Path(".dockerignore").read_text(encoding="utf-8").splitlines()
+    patterns = {line.strip() for line in dockerignore if line.strip() and not line.startswith("#")}
+
+    for pattern in {
+        ".git",
+        ".venv",
+        ".env",
+        "config.yaml",
+        "state",
+        "site",
+        "*.sqlite",
+        "*.sqlite-*",
+    }:
+        assert pattern in patterns
 
 
 def test_synology_installer_uses_cron_helper_instead_of_stale_raw_command():

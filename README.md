@@ -259,6 +259,10 @@ Paste that line into cron or the equivalent scheduler. Use `--no-venv` if
 - For adding RSS subscriptions, grouping feeds, and OPML import, see [`docs/feed-management.md`](docs/feed-management.md).
 - For Reeder/FreshRSS behavior, see [`docs/reeder-workflow.md`](docs/reeder-workflow.md).
 
+For Docker Compose, copy `.env.example` to `.env` only when you want to override
+the default run settings. The compose file has built-in defaults and does not
+require a local `.env` file.
+
 ## Development
 
 ```bash

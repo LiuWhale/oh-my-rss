@@ -50,11 +50,15 @@ Keep a Changelog. Version tags use semantic versioning.
   `oh-my-rss print-cron` instead of carrying a stale hand-written schedule.
 - Make `docker-compose.yml` honor the documented `CONFIG_PATH` environment
   variable.
+- Add `.dockerignore` so Docker builds exclude local virtualenvs, generated
+  state/site output, SQLite databases, and local secrets.
 - Normalize mixed-source category feed names by removing the leading `arXiv `
   prefix from public category feeds.
 
 ### Fixed
 
+- Let Docker Compose run with built-in defaults when no local `.env` file is
+  present.
 - Let `oh-my-rss run --dry-run` work without local `curl` or `pdftotext`,
   because preview mode does not download PDFs.
 - Keep the runtime `oh_my_rss.__version__` aligned with the package metadata
