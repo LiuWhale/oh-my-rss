@@ -9,15 +9,24 @@ cd "$APP_DIR"
 . .venv/bin/activate
 pip install --upgrade pip
 pip install -e .
+mkdir -p state site
 
 if [ ! -f config.yaml ]; then
   oh-my-rss init-config --output config.yaml
   echo "Created config.yaml. Edit it before enabling a schedule."
 fi
 
+CRON_LINE="$(oh-my-rss print-cron \
+  --cwd "$APP_DIR" \
+  --config config.yaml \
+  --limit 1 \
+  --interval-minutes 10 \
+  --log-path state/cron.log \
+  --venv .venv)"
+
 cat <<MSG
 Install complete.
 
 Example cron line:
-*/10 * * * * cd "$APP_DIR" && . .venv/bin/activate && oh-my-rss run --config config.yaml --limit 1 >> state/cron.log 2>&1
+$CRON_LINE
 MSG

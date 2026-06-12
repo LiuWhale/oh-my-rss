@@ -46,8 +46,15 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Changed
 
+- Update the Synology installer to print cron entries through
+  `oh-my-rss print-cron` instead of carrying a stale hand-written schedule.
 - Normalize mixed-source category feed names by removing the leading `arXiv `
   prefix from public category feeds.
+
+### Fixed
+
+- Keep the runtime `oh_my_rss.__version__` aligned with the package metadata
+  version.
 
 ## [0.1.2] - 2026-06-11
 
