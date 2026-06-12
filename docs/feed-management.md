@@ -115,3 +115,14 @@ curl -L --max-time 20 "https://example.com/feed.xml" | head
 
 For arXiv categories, prefer `https://export.arxiv.org/rss/<category>`, for
 example `https://export.arxiv.org/rss/cs.RO`.
+
+## Validated Robotics Journal Feeds
+
+The default package workflow detects arXiv IDs from FreshRSS entries. Use these
+non-arXiv journal feeds only with a deployment that also supports generic paper
+RSS sources, such as the NAS deployment script:
+
+- IJRR OnlineFirst:
+  `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=ijr`
+- Soft Robotics OnlineFirst:
+  `https://journals.sagepub.com/action/showFeed?type=axatoc&feed=rss&jc=srba`
