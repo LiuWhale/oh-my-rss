@@ -1,5 +1,7 @@
 # Oh My RSS
 
+![Oh My RSS GitHub cover](assets/github-cover.png)
+
 RSS-native AI research radar. Oh My RSS turns research feeds from FreshRSS into
 Chinese paper-story summaries, static public feeds, category feeds, and monthly
 trend reports that RSS clients such as Reeder can subscribe to.

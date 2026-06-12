@@ -33,6 +33,20 @@ def test_package_license_uses_spdx_string():
     assert metadata["project"]["license"] == "MIT"
 
 
+def test_readme_references_existing_github_cover():
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    assert "assets/github-cover.png" in readme
+    assert Path("assets/github-cover.png").is_file()
+
+
+def test_source_distribution_manifest_includes_cover_assets():
+    manifest = Path("MANIFEST.in").read_text(encoding="utf-8")
+
+    assert "graft assets" in manifest
+    assert "scripts/make-github-cover.py" in manifest
+
+
 def test_runtime_version_matches_package_metadata():
     metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 

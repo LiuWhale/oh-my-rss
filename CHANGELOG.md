@@ -44,6 +44,7 @@ Keep a Changelog. Version tags use semantic versioning.
 - Embed a first-page PNG preview in generated paper summary pages.
 - Document validated IJRR and Soft Robotics OnlineFirst RSS feeds.
 - Build source and wheel distributions in CI to catch packaging regressions.
+- Add a GitHub cover image for the repository README and social preview setup.
 
 ### Changed
 
