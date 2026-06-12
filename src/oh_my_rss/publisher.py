@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 import hashlib
 import html
@@ -13,13 +14,13 @@ from .arxiv import Paper
 from .domains import classify_research_domains
 from .reports import (
     render_direction_bars_svg,
-    render_keyword_trend_html,
+    render_keyword_trends_index_html,
     render_keyword_trend_json,
     render_monthly_report_html,
     render_monthly_report_json,
     render_source_donut_svg,
     render_trend_animated_svg,
-    render_trending_topic_html,
+    render_trending_topics_index_html,
     render_trending_topic_json,
 )
 from .render import render_detail_html, render_index_html, render_rss_xml
@@ -317,7 +318,7 @@ def publish_monthly_reports(
                 "url": url,
                 "generated_at": report.generated_at,
                 "feed_names": ["Monthly Research Radar"],
-                "summary_excerpt": report.summary,
+                "summary_excerpt": f"{report.summary}\n\n查看网页：{url}",
                 "month": report.month,
                 "total_papers": report.total_papers,
             }
@@ -349,6 +350,7 @@ def publish_trending_topics(
     trending_dir.mkdir(parents=True, exist_ok=True)
     base_url = public_base_url.rstrip("/")
     used_slugs: dict[str, str] = {}
+    topic_pages: list[tuple[TrendingTopic, str]] = []
 
     index_records: list[dict[str, object]] = []
     feed_records: list[dict[str, object]] = []
@@ -358,18 +360,17 @@ def publish_trending_topics(
             slug = f"{slug}-{hashlib.sha256(topic.name.encode('utf-8')).hexdigest()[:8]}"
         used_slugs[slug] = topic.name
 
-        html_path = trending_dir / f"{slug}.html"
         json_path = trending_dir / f"{slug}.json"
-        html_path.write_text(render_trending_topic_html(topic, slug=slug), encoding="utf-8")
         json_path.write_text(render_trending_topic_json(topic), encoding="utf-8")
 
-        url = f"{base_url}/reports/trending/{slug}.html"
+        topic_pages.append((topic, slug))
+        url = f"{base_url}/reports/trending/index.html#topic-{slug}"
         record = {
             "title": topic.title,
             "url": url,
             "generated_at": topic.generated_at,
             "feed_names": ["Trending Research Topics"],
-            "summary_excerpt": topic.summary,
+            "summary_excerpt": f"{topic.summary}\n\n查看网页：{url}",
             "name": topic.name,
             "month": topic.month,
             "paper_count": topic.paper_count,
@@ -380,6 +381,11 @@ def publish_trending_topics(
         index_records.append(record)
         feed_records.append(record)
 
+    (trending_dir / "index.html").write_text(
+        render_trending_topics_index_html(topic_pages),
+        encoding="utf-8",
+    )
+    remove_stale_report_detail_pages(trending_dir)
     (trending_dir / "index.json").write_text(
         json.dumps(index_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -391,7 +397,7 @@ def publish_trending_topics(
         title="Oh My RSS Trending Research Topics",
         description="Current hot research directions generated from Oh My RSS paper summaries.",
         feed_path="reports/trending.xml",
-        channel_link=feed_records[0]["url"] if feed_records else f"{base_url}/index.html",
+        channel_link=f"{base_url}/reports/trending/index.html",
         include_item_categories=False,
     )
     reports_root.mkdir(parents=True, exist_ok=True)
@@ -410,6 +416,7 @@ def publish_keyword_trends(
     keywords_dir.mkdir(parents=True, exist_ok=True)
     base_url = public_base_url.rstrip("/")
     used_slugs: dict[str, str] = {}
+    keyword_pages: list[tuple[KeywordTrend, str]] = []
 
     index_records: list[dict[str, object]] = []
     feed_records: list[dict[str, object]] = []
@@ -419,18 +426,17 @@ def publish_keyword_trends(
             slug = f"{slug}-{hashlib.sha256(trend.keyword.encode('utf-8')).hexdigest()[:8]}"
         used_slugs[slug] = trend.keyword
 
-        html_path = keywords_dir / f"{slug}.html"
         json_path = keywords_dir / f"{slug}.json"
-        html_path.write_text(render_keyword_trend_html(trend, slug=slug), encoding="utf-8")
         json_path.write_text(render_keyword_trend_json(trend), encoding="utf-8")
 
-        url = f"{base_url}/reports/keywords/{slug}.html"
+        keyword_pages.append((trend, slug))
+        url = f"{base_url}/reports/keywords/index.html#keyword-{slug}"
         record = {
             "title": trend.title,
             "url": url,
             "generated_at": trend.generated_at,
             "feed_names": ["Trending Research Keywords"],
-            "summary_excerpt": trend.summary,
+            "summary_excerpt": f"{trend.summary}\n\n查看网页：{url}",
             "keyword": trend.keyword,
             "month": trend.month,
             "paper_count": trend.paper_count,
@@ -441,6 +447,11 @@ def publish_keyword_trends(
         index_records.append(record)
         feed_records.append(record)
 
+    (keywords_dir / "index.html").write_text(
+        render_keyword_trends_index_html(keyword_pages),
+        encoding="utf-8",
+    )
+    remove_stale_report_detail_pages(keywords_dir)
     (keywords_dir / "index.json").write_text(
         json.dumps(index_records, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -452,7 +463,7 @@ def publish_keyword_trends(
         title="Oh My RSS Trending Research Keywords",
         description="Current hot research keywords generated from Oh My RSS paper summaries.",
         feed_path="reports/keywords.xml",
-        channel_link=feed_records[0]["url"] if feed_records else f"{base_url}/index.html",
+        channel_link=f"{base_url}/reports/keywords/index.html",
         include_item_categories=False,
     )
     reports_root.mkdir(parents=True, exist_ok=True)
@@ -475,6 +486,12 @@ def normalize_category_name(name: object) -> str:
 def remove_stale_arxiv_category_files(categories_dir: Path, active_slugs: set[str]) -> None:
     for path in categories_dir.glob("arxiv-*.xml"):
         if path.stem not in active_slugs:
+            path.unlink()
+
+
+def remove_stale_report_detail_pages(report_dir: Path) -> None:
+    for path in report_dir.glob("*.html"):
+        if path.name != "index.html":
             path.unlink()
 
 
@@ -603,15 +620,15 @@ def sitemap_url_records(
     for report in monthly_reports:
         urls[f"{base_url}/reports/monthly/{report.month}.html"] = report.generated_at
 
-    used_topic_slugs: dict[str, str] = {}
-    for topic in trending_topics:
-        slug = unique_slug(topic.name, used_topic_slugs)
-        urls[f"{base_url}/reports/trending/{slug}.html"] = topic.generated_at
+    if trending_topics:
+        urls[f"{base_url}/reports/trending/index.html"] = newest_generated_at(
+            topic.generated_at for topic in trending_topics
+        )
 
-    used_keyword_slugs: dict[str, str] = {}
-    for trend in keyword_trends:
-        slug = unique_slug(trend.keyword, used_keyword_slugs)
-        urls[f"{base_url}/reports/keywords/{slug}.html"] = trend.generated_at
+    if keyword_trends:
+        urls[f"{base_url}/reports/keywords/index.html"] = newest_generated_at(
+            trend.generated_at for trend in keyword_trends
+        )
 
     return [
         {"loc": loc, "lastmod": sitemap_date(lastmod)}
@@ -641,6 +658,11 @@ def unique_slug(name: str, used_slugs: dict[str, str]) -> str:
         slug = f"{slug}-{hashlib.sha256(name.encode('utf-8')).hexdigest()[:8]}"
     used_slugs[slug] = name
     return slug
+
+
+def newest_generated_at(values: Iterable[object]) -> str:
+    items = [str(value) for value in values if str(value or "").strip()]
+    return max(items) if items else ""
 
 
 def sitemap_date(value: str) -> str:

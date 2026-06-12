@@ -130,6 +130,74 @@ def render_monthly_report_html(report: MonthlyReport) -> str:
 
 
 def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None) -> str:
+    section = render_trending_topic_section(topic, slug=slug)
+    json_href = f"{slug or topic_slug_hint(topic.name)}.json"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_text(topic.title)} - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../monthly/{_attr(topic.month)}.html">返回月报</a></p>
+  <article>
+    <div class="links">
+      <a href="../trending.xml">订阅热点方向 RSS</a>
+      <a href="{_attr(json_href)}">查看统计 JSON</a>
+    </div>
+    {section}
+  </article>
+</main>
+</body>
+</html>
+"""
+
+
+def render_trending_topics_index_html(topics: list[tuple[TrendingTopic, str]]) -> str:
+    month = topics[0][0].month if topics else ""
+    generated_at = topics[0][0].generated_at if topics else ""
+    links = "\n".join(
+        f'      <li><a href="#topic-{_attr(slug)}">{_text(topic.name)}</a> '
+        f'<span class="muted">({topic.paper_count} 篇，热度 {topic.score:.1f})</span></li>'
+        for topic, slug in topics
+    )
+    sections = "\n".join(render_trending_topic_section(topic, slug=slug) for topic, slug in topics)
+    if not sections:
+        sections = "<p>暂无热点方向。</p>"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>热点研究方向 - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../../index.html">返回总结索引</a></p>
+  <article>
+    <h1>热点研究方向</h1>
+    <div class="meta">月份：{_text(month)} · 生成时间：{_text(generated_at)}</div>
+    <p>这里汇总当前论文流里最热的研究方向。RSS 条目会直接链接到本页对应段落。</p>
+    <div class="links">
+      <a href="../trending.xml">订阅热点方向 RSS</a>
+      <a href="index.json">查看统计 JSON</a>
+    </div>
+    <ol class="toc">
+{links}
+    </ol>
+    {sections}
+  </article>
+</main>
+</body>
+</html>
+"""
+
+
+def render_trending_topic_section(topic: TrendingTopic, *, slug: str | None = None) -> str:
     source_rows = table_rows(
         [[name, str(count)] for name, count in sorted_counts(topic.source_counts)],
         empty_text="暂无来源统计。",
@@ -151,26 +219,12 @@ def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None)
         empty_text="暂无代表论文。",
         raw_html=True,
     )
-    json_href = f"{slug or topic_slug_hint(topic.name)}.json"
-    return f"""<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_text(topic.title)} - Oh My RSS</title>
-  <style>{page_css()}{report_css()}</style>
-</head>
-<body>
-<main>
-  <p><a class="back" href="../monthly/{_attr(topic.month)}.html">返回月报</a></p>
-  <article>
+    section_id = f"topic-{slug or topic_slug_hint(topic.name)}"
+    return f"""
+    <section id="{_attr(section_id)}" class="report-section">
     <h1>{_text(topic.name)}</h1>
     <div class="meta">热点方向 · 月份：{_text(topic.month)} · 论文：{topic.paper_count} · 环比：{signed_number(topic.growth)} · 热度分：{topic.score:.1f}</div>
     <p>{_text(topic.summary)}</p>
-    <div class="links">
-      <a href="../trending.xml">订阅热点方向 RSS</a>
-      <a href="{_attr(json_href)}">查看统计 JSON</a>
-    </div>
 
     <h2>来源分布</h2>
     <table>
@@ -189,6 +243,30 @@ def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None)
       <thead><tr><th>论文</th><th>来源</th><th>生成时间</th><th>摘要片段</th></tr></thead>
       <tbody>{paper_rows}</tbody>
     </table>
+    </section>
+"""
+
+
+def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None) -> str:
+    section = render_keyword_trend_section(keyword, slug=slug)
+    json_href = f"{slug or topic_slug_hint(keyword.keyword)}.json"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_text(keyword.title)} - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../monthly/{_attr(keyword.month)}.html">返回月报</a></p>
+  <article>
+    <div class="links">
+      <a href="../keywords.xml">订阅关键词趋势 RSS</a>
+      <a href="{_attr(json_href)}">查看统计 JSON</a>
+    </div>
+    {section}
   </article>
 </main>
 </body>
@@ -196,7 +274,50 @@ def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None)
 """
 
 
-def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None) -> str:
+def render_keyword_trends_index_html(keywords: list[tuple[KeywordTrend, str]]) -> str:
+    month = keywords[0][0].month if keywords else ""
+    generated_at = keywords[0][0].generated_at if keywords else ""
+    links = "\n".join(
+        f'      <li><a href="#keyword-{_attr(slug)}">{_text(keyword.keyword)}</a> '
+        f'<span class="muted">({keyword.paper_count} 篇，热度 {keyword.score:.1f})</span></li>'
+        for keyword, slug in keywords
+    )
+    sections = "\n".join(
+        render_keyword_trend_section(keyword, slug=slug) for keyword, slug in keywords
+    )
+    if not sections:
+        sections = "<p>暂无关键词趋势。</p>"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>热点关键词 - Oh My RSS</title>
+  <style>{page_css()}{report_css()}</style>
+</head>
+<body>
+<main>
+  <p><a class="back" href="../../index.html">返回总结索引</a></p>
+  <article>
+    <h1>热点关键词</h1>
+    <div class="meta">月份：{_text(month)} · 生成时间：{_text(generated_at)}</div>
+    <p>这里汇总当前论文流里最热的研究关键词。RSS 条目会直接链接到本页对应段落。</p>
+    <div class="links">
+      <a href="../keywords.xml">订阅关键词趋势 RSS</a>
+      <a href="index.json">查看统计 JSON</a>
+    </div>
+    <ol class="toc">
+{links}
+    </ol>
+    {sections}
+  </article>
+</main>
+</body>
+</html>
+"""
+
+
+def render_keyword_trend_section(keyword: KeywordTrend, *, slug: str | None = None) -> str:
     source_rows = table_rows(
         [[name, str(count)] for name, count in sorted_counts(keyword.source_counts)],
         empty_text="暂无来源统计。",
@@ -218,26 +339,12 @@ def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None)
         empty_text="暂无代表论文。",
         raw_html=True,
     )
-    json_href = f"{slug or topic_slug_hint(keyword.keyword)}.json"
-    return f"""<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_text(keyword.title)} - Oh My RSS</title>
-  <style>{page_css()}{report_css()}</style>
-</head>
-<body>
-<main>
-  <p><a class="back" href="../monthly/{_attr(keyword.month)}.html">返回月报</a></p>
-  <article>
+    section_id = f"keyword-{slug or topic_slug_hint(keyword.keyword)}"
+    return f"""
+    <section id="{_attr(section_id)}" class="report-section">
     <h1>{_text(keyword.keyword)}</h1>
     <div class="meta">关键词趋势 · 月份：{_text(keyword.month)} · 论文：{keyword.paper_count} · 环比：{signed_number(keyword.growth)} · 热度分：{keyword.score:.1f}</div>
     <p>{_text(keyword.summary)}</p>
-    <div class="links">
-      <a href="../keywords.xml">订阅关键词趋势 RSS</a>
-      <a href="{_attr(json_href)}">查看统计 JSON</a>
-    </div>
 
     <h2>来源分布</h2>
     <table>
@@ -256,10 +363,7 @@ def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None)
       <thead><tr><th>论文</th><th>来源</th><th>方向</th><th>摘要片段</th></tr></thead>
       <tbody>{paper_rows}</tbody>
     </table>
-  </article>
-</main>
-</body>
-</html>
+    </section>
 """
 
 
@@ -395,11 +499,15 @@ def report_css() -> str:
 table { width: 100%; border-collapse: collapse; margin: 14px 0 28px; font-size: 14px; }
 th, td { border-top: 1px solid #edf0f2; padding: 9px 8px; text-align: left; vertical-align: top; }
 th { color: #374151; font-weight: 650; background: #f8fafc; }
+.toc { margin: 18px 0 28px; padding-left: 22px; }
+.toc li { margin: 7px 0; }
+.report-section { border-top: 1px solid #e5e7eb; padding-top: 22px; margin-top: 28px; }
 @media (min-width: 900px) { .report-grid { grid-template-columns: 1fr 1fr; } .report-grid figure:first-child { grid-column: 1 / -1; } }
 @media (prefers-color-scheme: dark) {
   .report-grid img { border-color: #344050; }
   th, td { border-color: #28313c; }
   th { background: #1d2530; color: #d7dee8; }
+  .report-section { border-color: #28313c; }
 }
 """
 

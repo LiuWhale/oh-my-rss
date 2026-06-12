@@ -183,6 +183,10 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
     root = ElementTree.parse(tmp_path / "reports" / "monthly.xml").getroot()
     assert root.findtext("channel/title") == "Oh My RSS Monthly Research Radar"
     assert root.findtext("channel/item/title") == "2026-06 研究趋势月报"
+    assert (
+        "查看网页：https://example.com/summaries/reports/monthly/2026-06.html"
+        in (root.findtext("channel/item/description") or "")
+    )
 
     html = (tmp_path / "reports" / "monthly" / "2026-06.html").read_text(encoding="utf-8")
     assert "热门方向" in html
@@ -197,6 +201,10 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
 
 
 def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
+    stale_html = tmp_path / "reports" / "trending" / "stale-topic.html"
+    stale_html.parent.mkdir(parents=True, exist_ok=True)
+    stale_html.write_text("old detail page", encoding="utf-8")
+
     topics = build_trending_topics(
         [
             {
@@ -234,25 +242,38 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
         generated_at="2026-06-12T09:00:00+08:00",
     )
 
-    assert published[0]["url"].startswith("https://example.com/summaries/reports/trending/")
+    assert published[0]["url"] == (
+        "https://example.com/summaries/reports/trending/index.html"
+        "#topic-manipulation-dexterous-hands"
+    )
     assert (tmp_path / "reports" / "trending.xml").exists()
     assert (tmp_path / "reports" / "trending" / "index.json").exists()
-    assert (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.html").exists()
-    assert (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.json").exists()
+    assert (tmp_path / "reports" / "trending" / "index.html").exists()
+    assert not (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.html").exists()
+    assert not stale_html.exists()
 
     root = ElementTree.parse(tmp_path / "reports" / "trending.xml").getroot()
     assert root.findtext("channel/title") == "Oh My RSS Trending Research Topics"
+    assert root.findtext("channel/link") == "https://example.com/summaries/reports/trending/index.html"
     assert root.findtext("channel/item/title") == "Manipulation / Dexterous Hands - 2026-06 热点方向"
-
-    html = (tmp_path / "reports" / "trending" / "manipulation-dexterous-hands.html").read_text(
-        encoding="utf-8"
+    assert (
+        "查看网页：https://example.com/summaries/reports/trending/index.html#topic-manipulation-dexterous-hands"
+        in (root.findtext("channel/item/description") or "")
     )
+
+    html = (tmp_path / "reports" / "trending" / "index.html").read_text(encoding="utf-8")
     assert "热点方向" in html
+    assert 'id="topic-manipulation-dexterous-hands"' in html
     assert "Manipulation paper" in html
+    assert "Humanoid paper" in html
     assert "趋势月份" in html
 
 
 def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
+    stale_html = tmp_path / "reports" / "keywords" / "stale-keyword.html"
+    stale_html.parent.mkdir(parents=True, exist_ok=True)
+    stale_html.write_text("old detail page", encoding="utf-8")
+
     trends = build_keyword_trends(
         [
             {
@@ -282,18 +303,25 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
         generated_at="2026-06-12T09:00:00+08:00",
     )
 
-    assert published[0]["url"] == "https://example.com/summaries/reports/keywords/vla.html"
+    assert published[0]["url"] == "https://example.com/summaries/reports/keywords/index.html#keyword-vla"
     assert (tmp_path / "reports" / "keywords.xml").exists()
     assert (tmp_path / "reports" / "keywords" / "index.json").exists()
-    assert (tmp_path / "reports" / "keywords" / "vla.html").exists()
-    assert (tmp_path / "reports" / "keywords" / "vla.json").exists()
+    assert (tmp_path / "reports" / "keywords" / "index.html").exists()
+    assert not (tmp_path / "reports" / "keywords" / "vla.html").exists()
+    assert not stale_html.exists()
 
     root = ElementTree.parse(tmp_path / "reports" / "keywords.xml").getroot()
     assert root.findtext("channel/title") == "Oh My RSS Trending Research Keywords"
+    assert root.findtext("channel/link") == "https://example.com/summaries/reports/keywords/index.html"
     assert root.findtext("channel/item/title") == "VLA - 2026-06 关键词趋势"
+    assert (
+        "查看网页：https://example.com/summaries/reports/keywords/index.html#keyword-vla"
+        in (root.findtext("channel/item/description") or "")
+    )
 
-    html = (tmp_path / "reports" / "keywords" / "vla.html").read_text(encoding="utf-8")
+    html = (tmp_path / "reports" / "keywords" / "index.html").read_text(encoding="utf-8")
     assert "关键词趋势" in html
+    assert 'id="keyword-vla"' in html
     assert "Humanoid VLA" in html
     assert "趋势月份" in html
 
@@ -492,5 +520,5 @@ def test_publish_site_discovery_writes_robots_and_sitemap(tmp_path):
     assert "https://example.com/summaries/index.html" in urls
     assert "https://example.com/summaries/paper.html" in urls
     assert "https://example.com/summaries/reports/monthly/2026-06.html" in urls
-    assert "https://example.com/summaries/reports/trending/vision-language-action.html" in urls
-    assert "https://example.com/summaries/reports/keywords/vla.html" in urls
+    assert "https://example.com/summaries/reports/trending/index.html" in urls
+    assert "https://example.com/summaries/reports/keywords/index.html" in urls
