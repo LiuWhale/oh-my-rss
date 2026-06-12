@@ -1,3 +1,4 @@
+import json
 from xml.etree import ElementTree
 
 from oh_my_rss.analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
@@ -8,6 +9,7 @@ from oh_my_rss.publisher import (
     publish_detail,
     publish_category_feeds,
     publish_feed,
+    publish_feed_directory,
     publish_keyword_trends,
     publish_monthly_reports,
     publish_subscription_opml,
@@ -331,3 +333,42 @@ def test_publish_subscription_opml_writes_complete_public_feed_bundle(tmp_path):
     assert outlines["Vision-Language-Action"]["xmlUrl"] == (
         "https://example.com/summaries/categories/vision-language-action.xml"
     )
+
+
+def test_publish_feed_directory_writes_machine_readable_public_feed_list(tmp_path):
+    category_records = [
+        {
+            "name": "Vision-Language-Action",
+            "slug": "vision-language-action",
+            "url": "https://example.com/summaries/categories/vision-language-action.xml",
+            "count": 3,
+        }
+    ]
+
+    publish_feed_directory(
+        category_records,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T15:30:00+08:00",
+    )
+
+    data = json.loads((tmp_path / "feeds.json").read_text(encoding="utf-8"))
+
+    assert data["title"] == "Oh My RSS feed directory"
+    assert data["generated_at"] == "2026-06-12T15:30:00+08:00"
+    assert data["public_base_url"] == "https://example.com/summaries"
+    assert data["feed_count"] == 7
+
+    feeds = {item["name"]: item for item in data["feeds"]}
+    assert feeds["Oh My RSS - All Summaries"]["url"] == "https://example.com/summaries/feed.xml"
+    assert feeds["Oh My RSS - Subscription OPML"]["format"] == "opml"
+    assert feeds["Oh My RSS - Trending Research Keywords"]["kind"] == "keyword-report"
+    assert feeds["Vision-Language-Action"] == {
+        "name": "Vision-Language-Action",
+        "kind": "category",
+        "format": "rss",
+        "url": "https://example.com/summaries/categories/vision-language-action.xml",
+        "html_url": "https://example.com/summaries/categories/vision-language-action.xml",
+        "slug": "vision-language-action",
+        "count": 3,
+    }

@@ -89,6 +89,8 @@ Each run writes:
 
 - `index.html`: public summary index
 - `feed.xml`: public RSS feed for generated summaries
+- `feeds.json`: machine-readable directory of all public RSS and OPML entry
+  points
 - `opml.xml`: complete OPML import file for the main feed, category feeds,
   monthly report feed, hot direction feed, and hot keyword feed
 - `categories/*.xml`: per-source/category RSS feeds
@@ -137,6 +139,12 @@ Use the JSON file only for integrations that need a machine-readable list:
 
 ```text
 <site.public_base_url>/categories/index.json
+```
+
+For integrations that need every public RSS and OPML entry point, use:
+
+```text
+<site.public_base_url>/feeds.json
 ```
 
 Monthly trend reports are published as a separate RSS feed:

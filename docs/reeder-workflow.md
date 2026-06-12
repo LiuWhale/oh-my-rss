@@ -42,6 +42,13 @@ For category-only bulk import into RSS clients, use:
 <site.public_base_url>/categories/opml.xml
 ```
 
+For scripts, launch pages, or integrations that need a machine-readable list of
+all public RSS and OPML entry points, use:
+
+```text
+<site.public_base_url>/feeds.json
+```
+
 Monthly research trend reports are published as a separate feed:
 
 ```text

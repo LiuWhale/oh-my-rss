@@ -15,6 +15,7 @@ from .publisher import (
     publish_category_feeds,
     publish_detail,
     publish_feed,
+    publish_feed_directory,
     publish_index,
     publish_keyword_trends,
     publish_monthly_reports,
@@ -195,6 +196,12 @@ def run_once(
         category_records,
         config.site.output_dir,
         public_base_url=config.site.public_base_url,
+    )
+    publish_feed_directory(
+        category_records,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
     )
     publish_monthly_reports(
         build_monthly_reports(all_done, generated_at=generated_at),

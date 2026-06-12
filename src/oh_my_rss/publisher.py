@@ -172,6 +172,32 @@ def publish_subscription_opml(
     )
 
 
+def publish_feed_directory(
+    category_records: list[dict[str, object]],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    feeds = feed_directory_records(category_records, public_base_url)
+    (output_dir / "feeds.json").write_text(
+        json.dumps(
+            {
+                "title": "Oh My RSS feed directory",
+                "generated_at": generated_at,
+                "public_base_url": public_base_url.rstrip("/"),
+                "feed_count": len(feeds),
+                "feeds": feeds,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def publish_monthly_reports(
     reports: list[MonthlyReport],
     output_dir: Path,
@@ -390,42 +416,15 @@ def render_category_opml(category_records: list[dict[str, object]]) -> str:
 
 
 def render_subscription_opml(category_records: list[dict[str, object]], public_base_url: str) -> str:
-    base_url = public_base_url.rstrip("/")
     feed_records = [
-        {
-            "name": "Oh My RSS - All Summaries",
-            "url": f"{base_url}/feed.xml",
-            "html_url": f"{base_url}/index.html",
-        },
-        {
-            "name": "Oh My RSS - Monthly Research Radar",
-            "url": f"{base_url}/reports/monthly.xml",
-            "html_url": f"{base_url}/reports/monthly.xml",
-        },
-        {
-            "name": "Oh My RSS - Trending Research Topics",
-            "url": f"{base_url}/reports/trending.xml",
-            "html_url": f"{base_url}/reports/trending.xml",
-        },
-        {
-            "name": "Oh My RSS - Trending Research Keywords",
-            "url": f"{base_url}/reports/keywords.xml",
-            "html_url": f"{base_url}/reports/keywords.xml",
-        },
-    ]
-    category_feed_records = [
-        {
-            "name": str(item["name"]),
-            "url": str(item["url"]),
-            "html_url": str(item["url"]),
-        }
-        for item in sorted(category_records, key=lambda record: str(record["name"]))
+        item for item in feed_directory_records(category_records, public_base_url)
+        if item["format"] == "rss"
     ]
     outlines = [
         "    "
         f'<outline text="{_xml_attr(item["name"])}" title="{_xml_attr(item["name"])}" '
         f'type="rss" xmlUrl="{_xml_attr(item["url"])}" htmlUrl="{_xml_attr(item["html_url"])}" />'
-        for item in [*feed_records, *category_feed_records]
+        for item in feed_records
     ]
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -437,6 +436,67 @@ def render_subscription_opml(category_records: list[dict[str, object]], public_b
         + "\n".join(outlines)
         + "\n  </body>\n</opml>\n"
     )
+
+
+def feed_directory_records(category_records: list[dict[str, object]], public_base_url: str) -> list[dict[str, object]]:
+    base_url = public_base_url.rstrip("/")
+    records: list[dict[str, object]] = [
+        {
+            "name": "Oh My RSS - All Summaries",
+            "kind": "summary",
+            "format": "rss",
+            "url": f"{base_url}/feed.xml",
+            "html_url": f"{base_url}/index.html",
+        },
+        {
+            "name": "Oh My RSS - Subscription OPML",
+            "kind": "subscription-bundle",
+            "format": "opml",
+            "url": f"{base_url}/opml.xml",
+            "html_url": f"{base_url}/opml.xml",
+        },
+        {
+            "name": "Oh My RSS - Category OPML",
+            "kind": "category-bundle",
+            "format": "opml",
+            "url": f"{base_url}/categories/opml.xml",
+            "html_url": f"{base_url}/categories/opml.xml",
+        },
+        {
+            "name": "Oh My RSS - Monthly Research Radar",
+            "kind": "monthly-report",
+            "format": "rss",
+            "url": f"{base_url}/reports/monthly.xml",
+            "html_url": f"{base_url}/reports/monthly.xml",
+        },
+        {
+            "name": "Oh My RSS - Trending Research Topics",
+            "kind": "topic-report",
+            "format": "rss",
+            "url": f"{base_url}/reports/trending.xml",
+            "html_url": f"{base_url}/reports/trending.xml",
+        },
+        {
+            "name": "Oh My RSS - Trending Research Keywords",
+            "kind": "keyword-report",
+            "format": "rss",
+            "url": f"{base_url}/reports/keywords.xml",
+            "html_url": f"{base_url}/reports/keywords.xml",
+        },
+    ]
+    records.extend(
+        {
+            "name": str(item["name"]),
+            "kind": "category",
+            "format": "rss",
+            "url": str(item["url"]),
+            "html_url": str(item["url"]),
+            "slug": str(item["slug"]),
+            "count": int(item["count"]),
+        }
+        for item in sorted(category_records, key=lambda record: str(record["name"]))
+    )
+    return records
 
 
 def write_manifest(records: list[dict[str, object]], output_dir: Path) -> None:
