@@ -12,6 +12,7 @@ from oh_my_rss.publisher import (
     publish_feed_directory,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_status,
     publish_subscription_opml,
     publish_trending_topics,
 )
@@ -372,3 +373,56 @@ def test_publish_feed_directory_writes_machine_readable_public_feed_list(tmp_pat
         "slug": "vision-language-action",
         "count": 3,
     }
+
+
+def test_publish_status_writes_public_service_health_summary(tmp_path):
+    records = [
+        {
+            "title": "Older paper",
+            "url": "https://example.com/summaries/older.html",
+            "generated_at": "2026-06-10T10:00:00+08:00",
+        },
+        {
+            "title": "Newest paper",
+            "url": "https://example.com/summaries/newest.html",
+            "generated_at": "2026-06-12T10:00:00+08:00",
+        },
+    ]
+    category_records = [
+        {
+            "name": "Vision-Language-Action",
+            "slug": "vision-language-action",
+            "url": "https://example.com/summaries/categories/vision-language-action.xml",
+            "count": 2,
+        }
+    ]
+
+    publish_status(
+        records,
+        category_records=category_records,
+        monthly_reports=[object()],
+        trending_topics=[object(), object()],
+        keyword_trends=[object(), object(), object()],
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T15:45:00+08:00",
+    )
+
+    data = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
+
+    assert data["ok"] is True
+    assert data["title"] == "Oh My RSS status"
+    assert data["generated_at"] == "2026-06-12T15:45:00+08:00"
+    assert data["summary_count"] == 2
+    assert data["category_count"] == 1
+    assert data["monthly_report_count"] == 1
+    assert data["trending_topic_count"] == 2
+    assert data["keyword_trend_count"] == 3
+    assert data["latest_summary"] == {
+        "title": "Newest paper",
+        "url": "https://example.com/summaries/newest.html",
+        "generated_at": "2026-06-12T10:00:00+08:00",
+    }
+    assert data["feeds"]["feed_directory"] == "https://example.com/summaries/feeds.json"
+    assert data["feeds"]["subscription_opml"] == "https://example.com/summaries/opml.xml"
+    assert data["feeds"]["keywords"] == "https://example.com/summaries/reports/keywords.xml"

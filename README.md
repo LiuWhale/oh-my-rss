@@ -91,6 +91,8 @@ Each run writes:
 - `feed.xml`: public RSS feed for generated summaries
 - `feeds.json`: machine-readable directory of all public RSS and OPML entry
   points
+- `status.json`: machine-readable service status summary with summary counts,
+  category counts, report counts, latest summary, and public feed URLs
 - `opml.xml`: complete OPML import file for the main feed, category feeds,
   monthly report feed, hot direction feed, and hot keyword feed
 - `categories/*.xml`: per-source/category RSS feeds
@@ -145,6 +147,12 @@ For integrations that need every public RSS and OPML entry point, use:
 
 ```text
 <site.public_base_url>/feeds.json
+```
+
+For monitoring or lightweight health checks, use:
+
+```text
+<site.public_base_url>/status.json
 ```
 
 Monthly trend reports are published as a separate RSS feed:

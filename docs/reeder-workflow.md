@@ -49,6 +49,12 @@ all public RSS and OPML entry points, use:
 <site.public_base_url>/feeds.json
 ```
 
+For simple monitoring or support checks, use:
+
+```text
+<site.public_base_url>/status.json
+```
+
 Monthly research trend reports are published as a separate feed:
 
 ```text

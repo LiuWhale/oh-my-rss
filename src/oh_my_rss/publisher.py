@@ -198,6 +198,56 @@ def publish_feed_directory(
     )
 
 
+def publish_status(
+    records: list[dict[str, object]],
+    *,
+    category_records: list[dict[str, object]],
+    monthly_reports: list[object],
+    trending_topics: list[object],
+    keyword_trends: list[object],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base_url = public_base_url.rstrip("/")
+    done = [record for record in records if record.get("url")]
+    done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
+    latest_summary = None
+    if done:
+        latest = done[0]
+        latest_summary = {
+            "title": str(latest.get("title") or latest.get("arxiv_id") or "Untitled paper"),
+            "url": str(latest["url"]),
+            "generated_at": str(latest.get("generated_at") or ""),
+        }
+    payload = {
+        "ok": True,
+        "title": "Oh My RSS status",
+        "generated_at": generated_at,
+        "public_base_url": base_url,
+        "summary_count": len(done),
+        "category_count": len(category_records),
+        "monthly_report_count": len(monthly_reports),
+        "trending_topic_count": len(trending_topics),
+        "keyword_trend_count": len(keyword_trends),
+        "latest_summary": latest_summary,
+        "feeds": {
+            "all": f"{base_url}/feed.xml",
+            "feed_directory": f"{base_url}/feeds.json",
+            "subscription_opml": f"{base_url}/opml.xml",
+            "category_opml": f"{base_url}/categories/opml.xml",
+            "monthly": f"{base_url}/reports/monthly.xml",
+            "trending": f"{base_url}/reports/trending.xml",
+            "keywords": f"{base_url}/reports/keywords.xml",
+        },
+    }
+    (output_dir / "status.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def publish_monthly_reports(
     reports: list[MonthlyReport],
     output_dir: Path,

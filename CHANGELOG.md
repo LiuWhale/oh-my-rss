@@ -9,6 +9,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Added
 
+- Publish `status.json`, a lightweight service status summary for monitoring
+  and support checks.
 - Publish `feeds.json`, a machine-readable directory of all public RSS and
   OPML entry points.
 - Expose RSS and OPML auto-discovery links plus visible subscription links from
