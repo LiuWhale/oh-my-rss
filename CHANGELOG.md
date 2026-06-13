@@ -7,6 +7,11 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep historical release backfills from replacing the current version as the
+  GitHub latest release.
+
 ## [0.1.4] - 2026-06-13
 
 ### Fixed
