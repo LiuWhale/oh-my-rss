@@ -7,6 +7,20 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-06-13
+
+### Fixed
+
+- Add a GitHub Actions release workflow so version tags publish GitHub Releases
+  with source and wheel artifacts.
+- Group category OPML exports under `Oh My RSS 论文分类` so RSS clients that
+  preserve OPML folders import all category feeds into one folder.
+- Make report RSS descriptions render their `查看网页` targets as clickable
+  HTML links.
+- Point hot-topic and hot-keyword RSS items to aggregate report pages with
+  anchors, and remove stale per-topic/per-keyword detail pages during
+  publishing.
+
 ## [0.1.3] - 2026-06-12
 
 ### Added
