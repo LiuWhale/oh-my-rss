@@ -6,6 +6,7 @@ import time
 
 from .analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
 from .arxiv import Paper, group_entries
+from .arxiv_discovery import WIDE_ARXIV_KEYWORDS, fetch_wide_arxiv_papers, merge_paper_candidates
 from .codex import run_codex_summary
 from .config import AppConfig
 from .db import backup_db, fetch_freshrss_entries, update_summary_links
@@ -107,6 +108,13 @@ def run_once(
         limit=lookback,
     )
     papers = group_entries(rows)
+    if config.arxiv_discovery.enabled:
+        arxiv_keywords = config.arxiv_discovery.keywords or list(WIDE_ARXIV_KEYWORDS)
+        wide_papers = fetch_wide_arxiv_papers(
+            keywords=arxiv_keywords,
+            max_results=config.arxiv_discovery.max_results,
+        )
+        papers = merge_paper_candidates(papers, wide_papers)
     selected = select_papers(papers, state, max(limit, 1), force_id)
     records = state.setdefault("papers", {})
     if not isinstance(records, dict):

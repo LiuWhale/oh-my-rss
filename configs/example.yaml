@@ -14,6 +14,14 @@ codex:
   timeout_seconds: 900
   reasoning_effort: low
 
+arxiv_discovery:
+  # Optional broad arXiv discovery. This supplements FreshRSS subscriptions
+  # with keyword-based arXiv API candidates, then classifies by title/abstract
+  # content instead of using arXiv subject names as public categories.
+  enabled: false
+  max_results: 100
+  keywords: []
+
 runtime:
   state_dir: ./state
   curl_bin: curl

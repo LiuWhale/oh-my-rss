@@ -15,6 +15,12 @@ site:
   output_dir: ./site
 codex:
   command: [codex, -a, never, -s, read-only, exec]
+arxiv_discovery:
+  enabled: true
+  max_results: 50
+  keywords:
+    - robot learning
+    - embodied ai
 """,
         encoding="utf-8",
     )
@@ -24,3 +30,6 @@ codex:
     assert config.freshrss.category == "Papers"
     assert config.site.output_dir == tmp_path / "site"
     assert config.codex.command[:2] == ["codex", "-a"]
+    assert config.arxiv_discovery.enabled is True
+    assert config.arxiv_discovery.max_results == 50
+    assert config.arxiv_discovery.keywords == ["robot learning", "embodied ai"]

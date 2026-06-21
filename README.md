@@ -9,6 +9,8 @@ trend reports that RSS clients such as Reeder can subscribe to.
 ## Features
 
 - Reads RSS entries from a FreshRSS SQLite database.
+- Optionally supplements subscribed feeds with broad arXiv API discovery so
+  relevant papers outside subscribed arXiv subjects can still enter the queue.
 - Detects arXiv, DOI, and generic paper links from RSS titles, links, and
   content.
 - De-duplicates papers that appear in multiple feeds.
@@ -115,6 +117,15 @@ The key fields are:
 - `site.output_dir`: local directory where HTML files are written.
 - `site.public_base_url`: public URL prefix for generated pages.
 - `codex.command`: command used to invoke Codex CLI.
+- `arxiv_discovery.enabled`: optional broad arXiv API discovery. When enabled,
+  Oh My RSS fetches keyword-based arXiv candidates and classifies them by
+  title/abstract content rather than exposing arXiv subject names as final
+  public categories.
+- `arxiv_discovery.max_results`: maximum arXiv API candidates to inspect per
+  run.
+- `arxiv_discovery.keywords`: optional replacement keyword list. Leave empty to
+  use the built-in robotics, embodied AI, VLA, navigation, SLAM, tactile, and
+  control-barrier discovery terms.
 - `runtime.state_dir`: state, PDF cache, prompts, logs, and DB backups.
 
 ## Public Feed

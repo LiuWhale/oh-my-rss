@@ -7,6 +7,12 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add optional broad arXiv API discovery for papers that do not appear in the
+  subscribed FreshRSS arXiv subjects. Discovered papers are still grouped by
+  content-derived research-domain labels, not by arXiv subject names.
+
 ### Fixed
 
 - Keep historical release backfills from replacing the current version as the

@@ -28,6 +28,13 @@ class CodexConfig:
 
 
 @dataclass
+class ArxivDiscoveryConfig:
+    enabled: bool = False
+    keywords: list[str] = field(default_factory=list)
+    max_results: int = 100
+
+
+@dataclass
 class RuntimeConfig:
     state_dir: Path = Path("state")
     curl_bin: str = "curl"
@@ -41,6 +48,7 @@ class AppConfig:
     freshrss: FreshRSSConfig
     site: SiteConfig
     codex: CodexConfig = field(default_factory=CodexConfig)
+    arxiv_discovery: ArxivDiscoveryConfig = field(default_factory=ArxivDiscoveryConfig)
     runtime: RuntimeConfig = field(default_factory=RuntimeConfig)
 
     @classmethod
@@ -62,6 +70,11 @@ class AppConfig:
                 command=list(data.get("codex", {}).get("command", CodexConfig().command)),
                 timeout_seconds=int(data.get("codex", {}).get("timeout_seconds", 900)),
                 reasoning_effort=str(data.get("codex", {}).get("reasoning_effort", "low")),
+            ),
+            arxiv_discovery=ArxivDiscoveryConfig(
+                enabled=bool(data.get("arxiv_discovery", {}).get("enabled", False)),
+                keywords=list(data.get("arxiv_discovery", {}).get("keywords", [])),
+                max_results=int(data.get("arxiv_discovery", {}).get("max_results", 100)),
             ),
             runtime=RuntimeConfig(
                 state_dir=_expand_path(data.get("runtime", {}).get("state_dir", "state"), base),
