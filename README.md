@@ -33,6 +33,8 @@ trend reports that RSS clients such as Reeder can subscribe to.
 - Produces a trending-topic feed with one item per hot research direction.
 - Produces a trending-keyword feed for specific terms such as VLA, diffusion
   policy, humanoid, SLAM, safety filter, and sim-to-real.
+- Produces a source health radar that records candidate counts, fetch failures,
+  sudden zero-count drops, and stale venue years for each discovery source.
 - Uses hash-based detail URLs to avoid stale browser/RSS-client caches.
 - Optionally backs up the FreshRSS DB and updates entries with a clickable summary link.
 - Prints a starter OPML bundle for common paper feeds so a new FreshRSS
@@ -154,6 +156,10 @@ Each run writes:
 - `reports/keywords.xml`: hot research-keyword RSS feed
 - `reports/keywords/*.html`: keyword pages with trend counts, sources, and
   representative papers
+- `reports/source-health.xml`: source health RSS feed
+- `reports/source-health/index.html`: source health radar page with per-source
+  counts and warnings
+- `reports/source-health/index.json`: machine-readable source health report
 - `manifest.json`: machine-readable summary metadata
 
 Category feed names are normalized for mixed paper sources: a leading `arXiv `
@@ -239,6 +245,22 @@ Specific research keywords are published as another RSS feed:
 Each keyword item links to a page that tracks term-level trends such as VLA,
 diffusion policy, humanoid, SLAM, safety filter, and sim-to-real across recent
 paper summaries.
+
+Source health checks are published as an operational radar feed:
+
+```text
+<site.public_base_url>/reports/source-health.xml
+```
+
+The source health page and JSON report show which discovery sources produced
+new candidates, which sources failed to fetch, which sources suddenly dropped
+to zero candidates after a nonzero run, and which venue-year configurations
+look stale:
+
+```text
+<site.public_base_url>/reports/source-health/index.html
+<site.public_base_url>/reports/source-health/index.json
+```
 
 These feeds are static. They let other people read generated summaries without
 logging into your FreshRSS account or sharing your read/unread state.

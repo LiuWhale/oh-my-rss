@@ -7,16 +7,27 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-06-22
+
 ### Added
 
 - Add optional broad arXiv API discovery for papers that do not appear in the
   subscribed FreshRSS arXiv subjects. Discovered papers are still grouped by
   content-derived research-domain labels, not by arXiv subject names.
+- Add a source health radar with HTML, JSON, and RSS outputs so self-hosted
+  runs can see per-source candidate counts, fetch failures, sudden zero-count
+  drops, and stale venue years.
+- Add the source health radar to `feeds.json`, `status.json`, sitemap output,
+  and the generated OPML subscription bundle.
 
 ### Fixed
 
+- Show broad arXiv discovery papers as `arXiv` in generated metadata instead
+  of exposing the internal discovery label.
 - Keep historical release backfills from replacing the current version as the
   GitHub latest release.
+- Set the release workflow repository context explicitly so GitHub Releases are
+  created against the intended repository.
 
 ## [0.1.4] - 2026-06-13
 
