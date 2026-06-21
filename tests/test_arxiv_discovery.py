@@ -40,13 +40,13 @@ def test_parse_arxiv_atom_creates_paper_from_non_robotics_subject():
     </feed>
     """
 
-    papers = parse_arxiv_atom(atom, feed_name="arXiv wide discovery")
+    papers = parse_arxiv_atom(atom, feed_name="arXiv")
 
     assert len(papers) == 1
     paper = papers[0]
     assert paper.arxiv_id == "2606.22222v1"
     assert paper.source_kind == "arXiv"
-    assert paper.feed_names == ["arXiv wide discovery"]
+    assert paper.feed_names == ["arXiv"]
     assert paper.pdf_url == "https://arxiv.org/pdf/2606.22222v1"
     assert "Robot Learning / Policy" in classify_research_domains(paper)
     assert "Manipulation / Dexterous Hands" in classify_research_domains(paper)
@@ -66,7 +66,7 @@ def test_merge_paper_candidates_deduplicates_wide_discovery_against_existing_sou
         title="Wide title",
         abstract="longer abstract from arXiv API",
         date=12,
-        feed_names=["arXiv wide discovery"],
+        feed_names=["arXiv"],
         feed_urls=["https://export.arxiv.org/api/query?..."],
     )
 
@@ -76,7 +76,7 @@ def test_merge_paper_candidates_deduplicates_wide_discovery_against_existing_sou
     assert merged[0].title == "Wide title"
     assert merged[0].abstract == "longer abstract from arXiv API"
     assert merged[0].entry_ids == [1]
-    assert merged[0].feed_names == ["arXiv cs.RO", "arXiv wide discovery"]
+    assert merged[0].feed_names == ["arXiv cs.RO", "arXiv"]
 
 
 def test_filter_relevant_wide_arxiv_papers_uses_content_not_subject():
@@ -84,13 +84,13 @@ def test_filter_relevant_wide_arxiv_papers_uses_content_not_subject():
         arxiv_id="2606.22222v1",
         title="Robot Hands from Human Demonstrations",
         abstract="We learn dexterous manipulation policies from human videos.",
-        feed_names=["arXiv wide discovery"],
+        feed_names=["arXiv"],
     )
     unrelated = Paper(
         arxiv_id="2606.33333v1",
         title="A Four-Section Bracket for the 48-team World Cup",
         abstract="We study tournament design, ranking manipulation, and bracket navigation.",
-        feed_names=["arXiv wide discovery"],
+        feed_names=["arXiv"],
     )
 
     filtered = filter_relevant_wide_arxiv_papers([robot, unrelated])

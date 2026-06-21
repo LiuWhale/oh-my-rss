@@ -33,10 +33,10 @@ def test_run_once_dry_run_merges_wide_arxiv_discovery(monkeypatch, tmp_path: Pat
         return [
             Paper(
                 arxiv_id="2606.22222v1",
-                title="Wide Discovery Robot Paper",
+                title="arXiv Robot Paper",
                 abstract="Robot manipulation from a non-subscribed arXiv area.",
                 date=200,
-                feed_names=["arXiv wide discovery"],
+                feed_names=["arXiv"],
             )
         ]
 

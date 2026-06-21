@@ -132,7 +132,7 @@ def fetch_wide_arxiv_papers(
     url = build_wide_arxiv_api_url(keywords=discovery_keywords, max_results=max_results)
     with urlopen(url, timeout=timeout) as response:  # noqa: S310 - URL is arXiv API from fixed builder.
         atom_text = response.read().decode("utf-8", errors="replace")
-    return filter_relevant_wide_arxiv_papers(parse_arxiv_atom(atom_text, feed_name="arXiv wide discovery", feed_url=url))
+    return filter_relevant_wide_arxiv_papers(parse_arxiv_atom(atom_text, feed_name="arXiv", feed_url=url))
 
 
 def filter_relevant_wide_arxiv_papers(papers: list[Paper]) -> list[Paper]:
