@@ -20,6 +20,7 @@ from .publisher import (
     publish_index,
     publish_keyword_trends,
     publish_monthly_reports,
+    publish_source_health_report,
     publish_site_discovery,
     publish_status,
     publish_subscription_opml,
@@ -27,6 +28,11 @@ from .publisher import (
     write_manifest,
 )
 from .state import load_state, save_state
+from .source_health import (
+    build_source_health_report,
+    latest_source_health_records,
+    record_source_health_snapshot,
+)
 
 
 def now_iso() -> str:
@@ -101,6 +107,8 @@ def run_once(
     config.site.output_dir.mkdir(parents=True, exist_ok=True)
     state_path = config.runtime.state_dir / "state.json"
     state = load_state(state_path)
+    generated_at = now_iso()
+    source_health_records: list[dict[str, object]] = []
     rows = fetch_freshrss_entries(
         config.freshrss.db_path,
         config.freshrss.category,
@@ -108,13 +116,50 @@ def run_once(
         limit=lookback,
     )
     papers = group_entries(rows)
+    source_health_records.append(
+        {
+            "name": f"FreshRSS: {config.freshrss.category}",
+            "kind": "freshrss",
+            "candidate_count": len(papers),
+            "status": "ok",
+            "raw_count": len(rows),
+        }
+    )
     if config.arxiv_discovery.enabled:
         arxiv_keywords = config.arxiv_discovery.keywords or list(WIDE_ARXIV_KEYWORDS)
-        wide_papers = fetch_wide_arxiv_papers(
-            keywords=arxiv_keywords,
-            max_results=config.arxiv_discovery.max_results,
-        )
+        try:
+            wide_papers = fetch_wide_arxiv_papers(
+                keywords=arxiv_keywords,
+                max_results=config.arxiv_discovery.max_results,
+            )
+            source_health_records.append(
+                {
+                    "name": "arXiv",
+                    "kind": "arxiv-api",
+                    "candidate_count": len(wide_papers),
+                    "status": "ok",
+                    "max_results": config.arxiv_discovery.max_results,
+                }
+            )
+        except Exception as exc:  # noqa: BLE001 - discovery failures should be visible, not fatal
+            wide_papers = []
+            source_health_records.append(
+                {
+                    "name": "arXiv",
+                    "kind": "arxiv-api",
+                    "candidate_count": 0,
+                    "status": "error",
+                    "error": str(exc),
+                    "max_results": config.arxiv_discovery.max_results,
+                }
+            )
         papers = merge_paper_candidates(papers, wide_papers)
+    source_health_report = build_source_health_report(
+        source_health_records,
+        previous_records=latest_source_health_records(state),
+        generated_at=generated_at,
+    )
+    record_source_health_snapshot(state, source_health_report)
     selected = select_papers(papers, state, max(limit, 1), force_id)
     records = state.setdefault("papers", {})
     if not isinstance(records, dict):
@@ -230,6 +275,12 @@ def run_once(
     )
     publish_keyword_trends(
         keyword_trends,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_source_health_report(
+        source_health_report,
         config.site.output_dir,
         public_base_url=config.site.public_base_url,
         generated_at=generated_at,

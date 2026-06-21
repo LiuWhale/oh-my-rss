@@ -246,6 +246,7 @@ def publish_status(
             "monthly": f"{base_url}/reports/monthly.xml",
             "trending": f"{base_url}/reports/trending.xml",
             "keywords": f"{base_url}/reports/keywords.xml",
+            "source_health": f"{base_url}/reports/source-health.xml",
         },
     }
     (output_dir / "status.json").write_text(
@@ -471,6 +472,108 @@ def publish_keyword_trends(
     return feed_records
 
 
+def publish_source_health_report(
+    report: dict[str, object],
+    output_dir: Path,
+    public_base_url: str,
+    generated_at: str,
+) -> dict[str, object]:
+    reports_root = output_dir / "reports"
+    source_dir = reports_root / "source-health"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    base_url = public_base_url.rstrip("/")
+    url = f"{base_url}/reports/source-health/index.html"
+
+    (source_dir / "index.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (source_dir / "index.html").write_text(render_source_health_html(report), encoding="utf-8")
+
+    warning_count = int(report.get("warning_count") or 0)
+    source_count = int(report.get("source_count") or 0)
+    summary = f"本次检查 {source_count} 个源，发现 {warning_count} 个提醒。"
+    if warning_count:
+        warning_sources = [
+            str(item.get("name") or "")
+            for item in report.get("sources", [])
+            if isinstance(item, dict) and item.get("warnings")
+        ][:6]
+        if warning_sources:
+            summary += " 需要关注：" + "、".join(warning_sources) + "。"
+
+    feed_record = {
+        "title": "源健康检查 / Source Health Radar",
+        "url": url,
+        "generated_at": generated_at,
+        "feed_names": ["Source Health Radar"],
+        "summary_excerpt": summary_with_html_link(summary, url),
+        "warning_count": warning_count,
+        "source_count": source_count,
+    }
+    feed_xml = render_rss_xml(
+        [feed_record],
+        generated_at=generated_at,
+        public_base_url=public_base_url,
+        title="Oh My RSS Source Health Radar",
+        description="Source health checks for Oh My RSS paper discovery.",
+        feed_path="reports/source-health.xml",
+        channel_link=url,
+        include_item_categories=False,
+    )
+    reports_root.mkdir(parents=True, exist_ok=True)
+    (reports_root / "source-health.xml").write_text(feed_xml, encoding="utf-8")
+    return feed_record
+
+
+def render_source_health_html(report: dict[str, object]) -> str:
+    generated_at = html.escape(str(report.get("generated_at") or ""), quote=False)
+    warning_count = int(report.get("warning_count") or 0)
+    source_count = int(report.get("source_count") or 0)
+    rows = []
+    for item in report.get("sources", []):
+        if not isinstance(item, dict):
+            continue
+        warnings = item.get("warnings") if isinstance(item.get("warnings"), list) else []
+        warning_text = "；".join(str(warning) for warning in warnings) if warnings else "正常"
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(item.get('name') or ''), quote=False)}</td>"
+            f"<td>{html.escape(str(item.get('kind') or ''), quote=False)}</td>"
+            f"<td>{int(item.get('candidate_count') or 0)}</td>"
+            f"<td>{html.escape(str(item.get('status') or 'ok'), quote=False)}</td>"
+            f"<td>{html.escape(warning_text, quote=False)}</td>"
+            "</tr>"
+        )
+    return (
+        "<!doctype html>\n"
+        '<html lang="zh-CN">\n'
+        "<head>\n"
+        '<meta charset="utf-8">\n'
+        "<title>源健康检查 / Source Health Radar</title>\n"
+        "<style>"
+        "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:32px;line-height:1.55;color:#1f2933}"
+        "table{border-collapse:collapse;width:100%;margin-top:18px}"
+        "th,td{border-bottom:1px solid #e5e7eb;padding:9px 8px;text-align:left;vertical-align:top}"
+        "th{background:#f6f8fa}"
+        ".bad{color:#b42318;font-weight:600}"
+        ".ok{color:#067647;font-weight:600}"
+        "</style>\n"
+        "</head>\n"
+        "<body>\n"
+        "<h1>源健康检查 / Source Health Radar</h1>\n"
+        f"<p>生成时间：{generated_at}</p>\n"
+        f"<p>共检查 {source_count} 个源，提醒数："
+        f"<span class=\"{'bad' if warning_count else 'ok'}\">{warning_count}</span></p>\n"
+        "<table>\n"
+        "<thead><tr><th>源</th><th>类型</th><th>候选数</th><th>状态</th><th>提醒</th></tr></thead>\n"
+        "<tbody>\n"
+        + "\n".join(rows)
+        + "\n</tbody>\n</table>\n"
+        "</body>\n</html>\n"
+    )
+
+
 def record_category_names(record: dict[str, object]) -> list[str]:
     raw_names = record.get("research_domains") or record.get("feed_names", []) or []
     return _unique_strings(normalize_category_name(name) for name in raw_names)
@@ -590,6 +693,13 @@ def feed_directory_records(category_records: list[dict[str, object]], public_bas
             "format": "rss",
             "url": f"{base_url}/reports/keywords.xml",
             "html_url": f"{base_url}/reports/keywords.xml",
+        },
+        {
+            "name": "Oh My RSS - Source Health Radar",
+            "kind": "source-health-report",
+            "format": "rss",
+            "url": f"{base_url}/reports/source-health.xml",
+            "html_url": f"{base_url}/reports/source-health/index.html",
         },
     ]
     records.extend(

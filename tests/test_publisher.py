@@ -391,12 +391,19 @@ def test_publish_feed_directory_writes_machine_readable_public_feed_list(tmp_pat
     assert data["title"] == "Oh My RSS feed directory"
     assert data["generated_at"] == "2026-06-12T15:30:00+08:00"
     assert data["public_base_url"] == "https://example.com/summaries"
-    assert data["feed_count"] == 7
+    assert data["feed_count"] == 8
 
     feeds = {item["name"]: item for item in data["feeds"]}
     assert feeds["Oh My RSS - All Summaries"]["url"] == "https://example.com/summaries/feed.xml"
     assert feeds["Oh My RSS - Subscription OPML"]["format"] == "opml"
     assert feeds["Oh My RSS - Trending Research Keywords"]["kind"] == "keyword-report"
+    assert feeds["Oh My RSS - Source Health Radar"] == {
+        "name": "Oh My RSS - Source Health Radar",
+        "kind": "source-health-report",
+        "format": "rss",
+        "url": "https://example.com/summaries/reports/source-health.xml",
+        "html_url": "https://example.com/summaries/reports/source-health/index.html",
+    }
     assert feeds["Vision-Language-Action"] == {
         "name": "Vision-Language-Action",
         "kind": "category",
@@ -459,6 +466,7 @@ def test_publish_status_writes_public_service_health_summary(tmp_path):
     assert data["feeds"]["feed_directory"] == "https://example.com/summaries/feeds.json"
     assert data["feeds"]["subscription_opml"] == "https://example.com/summaries/opml.xml"
     assert data["feeds"]["keywords"] == "https://example.com/summaries/reports/keywords.xml"
+    assert data["feeds"]["source_health"] == "https://example.com/summaries/reports/source-health.xml"
 
 
 def test_publish_site_discovery_writes_robots_and_sitemap(tmp_path):
