@@ -7,6 +7,18 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-06-22
+
+### Fixed
+
+- Tighten broad category matching for robot policy, safety/control,
+  benchmark/dataset, and embodied/foundation-model labels so generic words such
+  as `policy`, `safety`, `evaluation`, and `foundation model` do not create
+  unrelated category assignments without domain context.
+- Add regression coverage for common false positives while preserving explicit
+  VLA, robot imitation learning, CBF/safe-control, benchmark, and vision
+  segmentation matches.
+
 ## [0.1.7] - 2026-06-22
 
 ### Fixed

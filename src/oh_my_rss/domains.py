@@ -166,8 +166,86 @@ VLA_ACTION_TERMS = (
 GENERATED_CATEGORY_NAMES = {
     "Robotics / Embodied AI",
     "VLA / Multimodal Agents",
+    "VLA / Vision-Language-Action",
     *(name for name, _keywords in DOMAIN_RULES),
 }
+ROBOTICS_CONTEXT_TERMS = (
+    "robot",
+    "robotic",
+    "manipulation",
+    "dexterous",
+    "humanoid",
+    "legged",
+    "quadruped",
+    "bimanual",
+    "mobile manipulator",
+    "locomotion",
+    "navigation",
+    "embodied",
+)
+ROBOT_POLICY_EXPLICIT_TERMS = (
+    "diffusion policy",
+    "robot learning",
+    "robotic learning",
+    "vision-language-action",
+    "vision language action",
+)
+ROBOT_POLICY_LEARNING_TERMS = (
+    "policy learning",
+    "reinforcement learning",
+    "imitation learning",
+    "behavior cloning",
+    "offline rl",
+    "skill learning",
+    "policy",
+)
+SAFETY_CONTROL_EXPLICIT_TERMS = (
+    "safe reinforcement learning",
+    "safe learning",
+    "safe control",
+    "control barrier",
+    "barrier function",
+    "barrier certificate",
+    "cbf",
+    "safety filter",
+    "runtime assurance",
+    "model predictive control",
+    "mpc",
+    "robust control",
+    "reachability",
+)
+SAFETY_CONTROL_CONTEXT_TERMS = (
+    "control",
+    "robot",
+    "robotic",
+    "autonomous",
+    "navigation",
+    "verification",
+    "risk",
+    "constraint",
+)
+BENCHMARK_EXPLICIT_TERMS = (
+    "benchmark",
+    "dataset",
+    "leaderboard",
+    "evaluation suite",
+    "simulation benchmark",
+    "simulator",
+)
+EMBODIED_EXPLICIT_TERMS = (
+    "embodied ai",
+    "embodied agent",
+    "robot foundation model",
+    "robotic foundation model",
+    "generalist robot",
+    "generalist policy",
+)
+FOUNDATION_MODEL_TERMS = (
+    "foundation model",
+    "large language model",
+    "llm",
+    "world model",
+)
 
 
 def classify_research_domains(paper: PaperLike) -> list[str]:
@@ -202,7 +280,43 @@ def classify_record_domains(record: dict[str, object]) -> list[str]:
 def domain_rule_matches(name: str, text: str, keywords: Iterable[str]) -> bool:
     if name == VLA_DOMAIN_NAME:
         return matches_vla_topic(text)
+    if name == "Robot Learning / Policy":
+        return matches_robot_learning_policy(text)
+    if name == "Safety / Control":
+        return matches_safety_control(text)
+    if name == "Benchmark / Dataset / Evaluation":
+        return matches_benchmark_dataset(text)
+    if name == "Embodied AI / Foundation Models":
+        return matches_embodied_foundation(text)
     return any(keyword_matches(keyword, text) for keyword in keywords)
+
+
+def matches_robot_learning_policy(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in ROBOT_POLICY_EXPLICIT_TERMS):
+        return True
+    has_robot_context = any(keyword_matches(term, text) for term in ROBOTICS_CONTEXT_TERMS)
+    has_policy_learning = any(keyword_matches(term, text) for term in ROBOT_POLICY_LEARNING_TERMS)
+    return has_robot_context and has_policy_learning
+
+
+def matches_safety_control(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in SAFETY_CONTROL_EXPLICIT_TERMS):
+        return True
+    has_safety = keyword_matches("safety", text) or keyword_matches("safe", text)
+    has_control_context = any(keyword_matches(term, text) for term in SAFETY_CONTROL_CONTEXT_TERMS)
+    return has_safety and has_control_context
+
+
+def matches_benchmark_dataset(text: str) -> bool:
+    return any(keyword_matches(term, text) for term in BENCHMARK_EXPLICIT_TERMS)
+
+
+def matches_embodied_foundation(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in EMBODIED_EXPLICIT_TERMS):
+        return True
+    has_foundation_model = any(keyword_matches(term, text) for term in FOUNDATION_MODEL_TERMS)
+    has_robot_context = any(keyword_matches(term, text) for term in ROBOTICS_CONTEXT_TERMS)
+    return has_foundation_model and has_robot_context
 
 
 def matches_vla_topic(text: str) -> bool:
