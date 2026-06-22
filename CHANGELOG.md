@@ -7,6 +7,14 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-06-22
+
+### Fixed
+
+- Keep duplicate category aliases in sync when publishing category RSS feeds,
+  so equivalent category URLs keep receiving the same updated item set instead
+  of drifting apart.
+
 ## [0.1.5] - 2026-06-22
 
 ### Added

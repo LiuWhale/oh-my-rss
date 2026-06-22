@@ -26,6 +26,16 @@ from .reports import (
 from .render import render_detail_html, render_index_html, render_rss_xml
 
 
+CATEGORY_ALIAS_GROUPS: tuple[tuple[str, ...], ...] = (
+    ("Robotics / Embodied AI", "Robotics latest (cs.RO)"),
+    ("VLA / Multimodal Agents", "VLA / Vision-Language-Action", "Vision-Language-Action"),
+    ("Robot Learning / Policy", "机器人学习 / Policy Learning"),
+    ("Navigation / Planning", "导航规划 / Navigation"),
+    ("Benchmark / Dataset / Evaluation", "Benchmark数据集 / Dataset"),
+    ("Safety / Control", "安全控制 / Safety"),
+)
+
+
 def detail_filename(arxiv_id: str, summary_sha256: str) -> str:
     safe = arxiv_id.replace("/", "_")
     return f"{safe}-{summary_sha256[:12]}.html"
@@ -120,6 +130,7 @@ def publish_category_feeds(
             category_names = ["Uncategorized"]
         for category_name in category_names:
             grouped.setdefault(category_name, []).append(record)
+    sync_duplicate_category_aliases(grouped)
 
     categories_dir = output_dir / "categories"
     categories_dir.mkdir(parents=True, exist_ok=True)
@@ -577,6 +588,36 @@ def render_source_health_html(report: dict[str, object]) -> str:
 def record_category_names(record: dict[str, object]) -> list[str]:
     raw_names = record.get("research_domains") or record.get("feed_names", []) or []
     return _unique_strings(normalize_category_name(name) for name in raw_names)
+
+
+def sync_duplicate_category_aliases(grouped: dict[str, list[dict[str, object]]]) -> None:
+    for alias_group in CATEGORY_ALIAS_GROUPS:
+        active_names = [name for name in alias_group if name in grouped]
+        if len(active_names) < 2:
+            continue
+        merged = unique_category_records(record for name in active_names for record in grouped[name])
+        for name in active_names:
+            grouped[name] = list(merged)
+
+
+def unique_category_records(records: Iterable[dict[str, object]]) -> list[dict[str, object]]:
+    seen: set[str] = set()
+    result: list[dict[str, object]] = []
+    for record in records:
+        key = category_record_key(record)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(record)
+    return result
+
+
+def category_record_key(record: dict[str, object]) -> str:
+    for field in ("url", "paper_id", "arxiv_id", "title"):
+        value = str(record.get(field) or "").strip()
+        if value:
+            return f"{field}:{value}"
+    return f"object:{id(record)}"
 
 
 def normalize_category_name(name: object) -> str:

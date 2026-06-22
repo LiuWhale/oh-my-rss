@@ -146,6 +146,44 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     )
 
 
+def test_publish_category_feeds_keeps_duplicate_category_aliases_in_sync(tmp_path):
+    records = [
+        {
+            "title": "Coarse robotics paper",
+            "arxiv_id": "2606.11184v1",
+            "url": "https://example.com/summaries/coarse.html",
+            "generated_at": "2026-06-11T18:00:00+08:00",
+            "research_domains": ["Robotics / Embodied AI"],
+        },
+        {
+            "title": "Detailed robotics paper",
+            "arxiv_id": "2606.11185v1",
+            "url": "https://example.com/summaries/detailed.html",
+            "generated_at": "2026-06-12T18:00:00+08:00",
+            "research_domains": ["Robotics latest (cs.RO)"],
+        },
+    ]
+
+    categories = publish_category_feeds(
+        records,
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-12T18:01:00+08:00",
+    )
+
+    counts = {item["name"]: item["count"] for item in categories}
+    assert counts["Robotics / Embodied AI"] == 2
+    assert counts["Robotics latest (cs.RO)"] == 2
+
+    coarse = ElementTree.parse(tmp_path / "categories" / "robotics-embodied-ai.xml")
+    detailed = ElementTree.parse(tmp_path / "categories" / "robotics-latest-cs-ro.xml")
+    coarse_titles = [item.text for item in coarse.findall("./channel/item/title")]
+    detailed_titles = [item.text for item in detailed.findall("./channel/item/title")]
+
+    assert coarse_titles == ["Detailed robotics paper", "Coarse robotics paper"]
+    assert detailed_titles == coarse_titles
+
+
 def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
     reports = build_monthly_reports(
         [
