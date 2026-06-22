@@ -35,3 +35,33 @@ def test_classify_research_domains_preserves_specific_arxiv_topic_when_no_keywor
     domains = classify_research_domains(paper)
 
     assert domains == ["Machine Learning (cs.LG)"]
+
+
+def test_classify_research_domains_does_not_reinforce_stale_vla_feed_label():
+    paper = Paper(
+        arxiv_id="cvf-iccv-2025-81cb3839b2bf25e2",
+        title=(
+            "One Polyp Identifies All: One-Shot Polyp Segmentation with SAM via "
+            "Cascaded Priors and Iterative Prompt Evolution"
+        ),
+        abstract="We study one-shot medical polyp segmentation with SAM priors.",
+        feed_names=["VLA / Multimodal Agents"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert all("VLA" not in domain and "Vision-Language-Action" not in domain for domain in domains)
+    assert "3D Vision / Perception" in domains
+
+
+def test_classify_research_domains_keeps_explicit_vla_papers():
+    paper = Paper(
+        arxiv_id="2606.11186v1",
+        title="OpenVLA: An Open-Source Vision-Language-Action Model",
+        abstract="We train a vision-language-action policy for general robot control.",
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" in domains

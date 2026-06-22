@@ -96,6 +96,7 @@ DOMAIN_RULES: list[tuple[str, tuple[str, ...]]] = [
             "pose estimation",
             "object detection",
             "semantic segmentation",
+            "segmentation",
             "perception",
         ),
     ),
@@ -139,14 +140,42 @@ DOMAIN_RULES: list[tuple[str, tuple[str, ...]]] = [
     ),
 ]
 
+VLA_DOMAIN_NAME = "Vision-Language-Action"
+VLA_EXPLICIT_TERMS = (
+    "vision language action",
+    "vision-language-action",
+    "openvla",
+)
+VLA_VISION_LANGUAGE_TERMS = (
+    "vision language",
+    "vision-language",
+    "visual language",
+    "vlm",
+    "multimodal",
+)
+VLA_ACTION_TERMS = (
+    "action",
+    "policy",
+    "robot",
+    "robotic",
+    "control",
+    "manipulation",
+    "trajectory",
+    "actuation",
+)
+GENERATED_CATEGORY_NAMES = {
+    "Robotics / Embodied AI",
+    "VLA / Multimodal Agents",
+    *(name for name, _keywords in DOMAIN_RULES),
+}
+
 
 def classify_research_domains(paper: PaperLike) -> list[str]:
     text = searchable_text(
         paper.title,
         paper.abstract,
-        " ".join(paper.feed_names or []),
     )
-    domains = [name for name, keywords in DOMAIN_RULES if any(keyword in text for keyword in keywords)]
+    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, text, keywords)]
     if is_robotics_paper(text, getattr(paper, "feed_names", [])):
         domains.append("Robotics / Embodied AI")
     if not domains:
@@ -161,14 +190,31 @@ def classify_record_domains(record: dict[str, object]) -> list[str]:
     text = searchable_text(
         record.get("title"),
         record.get("summary_excerpt"),
-        " ".join(str(item) for item in as_iterable(record.get("feed_names"))),
     )
-    domains = [name for name, keywords in DOMAIN_RULES if any(keyword in text for keyword in keywords)]
+    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, text, keywords)]
     if is_robotics_paper(text, as_iterable(record.get("feed_names"))):
         domains.append("Robotics / Embodied AI")
     if not domains:
         domains.extend(normalized_feed_topics(as_iterable(record.get("feed_names"))))
     return unique_strings(domains) or ["Uncategorized"]
+
+
+def domain_rule_matches(name: str, text: str, keywords: Iterable[str]) -> bool:
+    if name == VLA_DOMAIN_NAME:
+        return matches_vla_topic(text)
+    return any(keyword_matches(keyword, text) for keyword in keywords)
+
+
+def matches_vla_topic(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in VLA_EXPLICIT_TERMS):
+        return True
+    has_vision_language = any(keyword_matches(term, text) for term in VLA_VISION_LANGUAGE_TERMS)
+    has_action = any(keyword_matches(term, text) for term in VLA_ACTION_TERMS)
+    return has_vision_language and has_action
+
+
+def keyword_matches(keyword: str, text: str) -> bool:
+    return keyword in text or searchable_text(keyword) in text
 
 
 def searchable_text(*values: object) -> str:
@@ -187,9 +233,13 @@ def normalized_feed_topics(feed_names: Iterable[object]) -> list[str]:
     topics = []
     for feed_name in feed_names:
         topic = normalize_topic(feed_name)
-        if topic and topic not in {"arxiv", "fresh rss", "freshrss"}:
+        if topic and topic.lower() not in {"arxiv", "fresh rss", "freshrss"} and not is_generated_category_name(topic):
             topics.append(topic)
     return unique_strings(topics)
+
+
+def is_generated_category_name(topic: str) -> bool:
+    return topic in GENERATED_CATEGORY_NAMES
 
 
 def normalize_topic(value: object) -> str:

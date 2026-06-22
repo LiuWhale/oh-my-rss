@@ -7,6 +7,16 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-06-22
+
+### Fixed
+
+- Tighten VLA classification so stale generated category labels cannot
+  reinforce themselves, while explicit Vision-Language-Action papers still
+  classify as VLA.
+- Classify generic segmentation papers into vision/perception instead of
+  falling back to stale category labels.
+
 ## [0.1.6] - 2026-06-22
 
 ### Fixed
