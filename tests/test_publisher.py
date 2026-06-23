@@ -59,6 +59,7 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
         title="Safe Diffusion Policy for Mobile Manipulation",
         abstract="A robot learning paper for safe manipulation and navigation.",
         feed_names=["arXiv Robotics latest (cs.RO)"],
+        keywords=["robot learning", "safe control"],
     )
 
     record = publish_detail(
@@ -73,6 +74,7 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
     assert "Robot Learning / Policy" in record["research_domains"]
     assert "Manipulation / Dexterous Hands" in record["research_domains"]
     assert "Robotics latest (cs.RO)" not in record["research_domains"]
+    assert record["keywords"] == ["robot learning", "safe control"]
 
 
 def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):

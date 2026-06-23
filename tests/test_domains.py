@@ -1,5 +1,5 @@
 from oh_my_rss.arxiv import Paper
-from oh_my_rss.domains import classify_research_domains
+from oh_my_rss.domains import classify_record_domains, classify_research_domains
 
 
 def test_classify_research_domains_combines_robotics_topics_from_title_and_abstract():
@@ -169,6 +169,51 @@ def test_vlm_action_understanding_without_robot_policy_context_is_not_vla():
 
     assert "Vision-Language-Action" not in domains
     assert "Robotics / Embodied AI" not in domains
+
+
+def test_vla_title_without_abstract_or_keyword_support_is_not_enough():
+    paper = Paper(
+        arxiv_id="2606.11212v1",
+        title="Vision-Language-Action Model for Fine-grained Action Understanding",
+        abstract="We study video action recognition and temporal visual reasoning in web videos.",
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" not in domains
+    assert "Robotics / Embodied AI" not in domains
+
+
+def test_keywords_are_strong_classification_evidence():
+    paper = Paper(
+        arxiv_id="2606.11213v1",
+        title="Policy Distillation at Scale",
+        abstract="We evaluate a scalable learning system.",
+        feed_names=["arXiv"],
+        keywords=["robot learning", "imitation learning", "robot manipulation"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Robot Learning / Policy" in domains
+    assert "Manipulation / Dexterous Hands" in domains
+    assert "Robotics / Embodied AI" in domains
+
+
+def test_record_keyword_fields_are_used_when_research_domains_are_missing():
+    record = {
+        "title": "A Generalist Policy",
+        "summary_excerpt": "We evaluate the model on manipulation tasks.",
+        "keywords": ["VLA", "vision-language-action", "robot manipulation"],
+        "feed_names": ["arXiv"],
+    }
+
+    domains = classify_record_domains(record)
+
+    assert "Vision-Language-Action" in domains
+    assert "Manipulation / Dexterous Hands" in domains
+    assert "Robotics / Embodied AI" in domains
 
 
 def test_biological_locomotion_without_robot_context_is_not_robotics():

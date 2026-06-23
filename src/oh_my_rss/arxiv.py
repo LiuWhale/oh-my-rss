@@ -24,6 +24,7 @@ class Paper:
     entry_ids: list[int] = field(default_factory=list)
     feed_names: list[str] = field(default_factory=list)
     feed_urls: list[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
     rss_link: str = ""
     guid: str = ""
     paper_id: str = ""

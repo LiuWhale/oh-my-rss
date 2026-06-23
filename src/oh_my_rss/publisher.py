@@ -72,6 +72,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         "generated_at": generated_at,
         "summary_sha256": sha,
         "feed_names": paper.feed_names,
+        "keywords": paper.keywords,
         "research_domains": classify_research_domains(paper),
         "entry_ids": paper.entry_ids,
         "summary_excerpt": summary_excerpt(markdown),

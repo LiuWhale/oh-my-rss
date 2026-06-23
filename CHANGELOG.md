@@ -7,6 +7,19 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-06-23
+
+### Fixed
+
+- Classify research domains from abstract and keyword evidence first, with
+  paper titles used only as auxiliary evidence when the abstract or keywords
+  provide matching domain context.
+- Prevent title-only Vision-Language-Action wording from pushing visual action
+  understanding papers into VLA or robotics categories without robot policy,
+  manipulation, or control evidence.
+- Preserve paper keywords in published records so later reports and
+  reclassification passes can reuse the same evidence.
+
 ## [0.1.9] - 2026-06-23
 
 ### Fixed

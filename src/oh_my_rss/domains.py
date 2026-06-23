@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import re
 from typing import Iterable, Protocol
 
@@ -176,7 +177,9 @@ GENERATED_CATEGORY_NAMES = {
 }
 ROBOTICS_CONTEXT_TERMS = (
     "robot",
+    "robots",
     "robotic",
+    "robotics",
     "manipulation",
     "dexterous",
     "humanoid",
@@ -203,6 +206,7 @@ ROBOT_POLICY_LEARNING_TERMS = (
     "offline rl",
     "skill learning",
     "policy",
+    "policies",
 )
 SAFETY_CONTROL_EXPLICIT_TERMS = (
     "safe reinforcement learning",
@@ -263,7 +267,9 @@ LEGGED_ROBOT_EXPLICIT_TERMS = (
 )
 LOCOMOTION_ROBOT_CONTEXT_TERMS = (
     "robot",
+    "robots",
     "robotic",
+    "robotics",
     "legged",
     "humanoid",
     "quadruped",
@@ -272,13 +278,67 @@ LOCOMOTION_ROBOT_CONTEXT_TERMS = (
 )
 
 
-def classify_research_domains(paper: PaperLike) -> list[str]:
-    text = searchable_text(
-        paper.title,
-        paper.abstract,
+@dataclass(frozen=True)
+class ClassificationEvidence:
+    title_text: str
+    support_text: str
+    full_text: str
+
+    @property
+    def has_support(self) -> bool:
+        return bool(self.support_text.strip())
+
+    @property
+    def semantic_text(self) -> str:
+        return self.support_text if self.has_support else self.full_text
+
+
+def evidence_from_paper(paper: PaperLike) -> ClassificationEvidence:
+    return ClassificationEvidence(
+        title_text=searchable_text(getattr(paper, "title", "")),
+        support_text=searchable_text(getattr(paper, "abstract", ""), *keyword_values(getattr(paper, "keywords", []))),
+        full_text=searchable_text(
+            getattr(paper, "title", ""),
+            getattr(paper, "abstract", ""),
+            *keyword_values(getattr(paper, "keywords", [])),
+        ),
     )
-    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, text, keywords)]
-    if is_robotics_paper(text, getattr(paper, "feed_names", [])):
+
+
+def evidence_from_record(record: dict[str, object]) -> ClassificationEvidence:
+    keywords = keyword_values(
+        record.get("keywords"),
+        record.get("paper_keywords"),
+        record.get("author_keywords"),
+        record.get("subjects"),
+        record.get("tags"),
+    )
+    abstract_values = (
+        record.get("abstract"),
+        record.get("summary_excerpt"),
+        record.get("content"),
+    )
+    return ClassificationEvidence(
+        title_text=searchable_text(record.get("title")),
+        support_text=searchable_text(*abstract_values, *keywords),
+        full_text=searchable_text(record.get("title"), *abstract_values, *keywords),
+    )
+
+
+def keyword_values(*values: object) -> list[str]:
+    flattened: list[str] = []
+    for value in values:
+        for item in as_iterable(value):
+            text = str(item or "").strip()
+            if text:
+                flattened.append(text)
+    return flattened
+
+
+def classify_research_domains(paper: PaperLike) -> list[str]:
+    evidence = evidence_from_paper(paper)
+    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, evidence, keywords)]
+    if is_robotics_paper(evidence.semantic_text, getattr(paper, "feed_names", [])):
         domains.append("Robotics / Embodied AI")
     if not domains:
         domains.extend(normalized_feed_topics(getattr(paper, "feed_names", [])))
@@ -289,21 +349,19 @@ def classify_record_domains(record: dict[str, object]) -> list[str]:
     existing = record.get("research_domains")
     if existing:
         return unique_strings(normalize_topic(item) for item in as_iterable(existing))
-    text = searchable_text(
-        record.get("title"),
-        record.get("summary_excerpt"),
-    )
-    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, text, keywords)]
-    if is_robotics_paper(text, as_iterable(record.get("feed_names"))):
+    evidence = evidence_from_record(record)
+    domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, evidence, keywords)]
+    if is_robotics_paper(evidence.semantic_text, as_iterable(record.get("feed_names"))):
         domains.append("Robotics / Embodied AI")
     if not domains:
         domains.extend(normalized_feed_topics(as_iterable(record.get("feed_names"))))
     return unique_strings(domains) or ["Uncategorized"]
 
 
-def domain_rule_matches(name: str, text: str, keywords: Iterable[str]) -> bool:
+def domain_rule_matches(name: str, evidence: ClassificationEvidence, keywords: Iterable[str]) -> bool:
+    text = evidence.semantic_text
     if name == VLA_DOMAIN_NAME:
-        return matches_vla_topic(text)
+        return matches_vla_topic(evidence)
     if name == "Robot Learning / Policy":
         return matches_robot_learning_policy(text)
     if name == "Humanoid / Legged Robots":
@@ -353,12 +411,30 @@ def matches_embodied_foundation(text: str) -> bool:
     return has_foundation_model and has_robot_context
 
 
-def matches_vla_topic(text: str) -> bool:
+def matches_vla_topic(evidence: ClassificationEvidence) -> bool:
+    text = evidence.semantic_text
     if any(keyword_matches(term, text) for term in VLA_EXPLICIT_TERMS):
         return True
     has_vision_language = any(keyword_matches(term, text) for term in VLA_VISION_LANGUAGE_TERMS)
     has_action = any(keyword_matches(term, text) for term in VLA_ACTION_TERMS)
-    return has_vision_language and has_action
+    if has_vision_language and has_action:
+        return True
+    if not evidence.has_support:
+        return False
+    title_says_vla = any(keyword_matches(term, evidence.title_text) for term in VLA_EXPLICIT_TERMS)
+    title_says_vision_language = any(keyword_matches(term, evidence.title_text) for term in VLA_VISION_LANGUAGE_TERMS)
+    support_has_robot_action_context = any(
+        keyword_matches(term, text)
+        for term in (
+            *VLA_ACTION_TERMS,
+            "robot arm",
+            "robot policy",
+            "robot policies",
+            "robot manipulation",
+            "robot control",
+        )
+    )
+    return (title_says_vla or title_says_vision_language) and support_has_robot_action_context
 
 
 def keyword_matches(keyword: str, text: str) -> bool:
@@ -383,7 +459,7 @@ def normalize_match_text(value: object) -> str:
 def is_robotics_paper(text: str, feed_names: Iterable[object]) -> bool:
     if any("robot" in str(name).lower() or "cs.ro" in str(name).lower() for name in feed_names):
         return True
-    if any(keyword_matches(term, text) for term in ("robot", "robotic", "embodied")):
+    if any(keyword_matches(term, text) for term in ("robot", "robots", "robotic", "robotics", "embodied")):
         return True
     if keyword_matches("manipulation", text) and any(
         keyword_matches(term, text) for term in ("robot", "robotic", "bimanual", "dexterous")
