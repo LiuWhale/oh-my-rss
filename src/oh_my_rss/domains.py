@@ -142,6 +142,7 @@ DOMAIN_RULES: list[tuple[str, tuple[str, ...]]] = [
 
 VLA_DOMAIN_NAME = "Vision-Language-Action"
 VLA_EXPLICIT_TERMS = (
+    "vla",
     "vision language action",
     "vision-language-action",
     "openvla",
@@ -154,7 +155,11 @@ VLA_VISION_LANGUAGE_TERMS = (
     "multimodal",
 )
 VLA_ACTION_TERMS = (
-    "action",
+    "action model",
+    "action policy",
+    "action representation",
+    "action controller",
+    "controller",
     "policy",
     "robot",
     "robotic",
@@ -246,6 +251,25 @@ FOUNDATION_MODEL_TERMS = (
     "llm",
     "world model",
 )
+LEGGED_ROBOT_EXPLICIT_TERMS = (
+    "humanoid",
+    "quadruped",
+    "biped",
+    "bipedal",
+    "legged robot",
+    "legged robotics",
+    "robot locomotion",
+    "robotic locomotion",
+)
+LOCOMOTION_ROBOT_CONTEXT_TERMS = (
+    "robot",
+    "robotic",
+    "legged",
+    "humanoid",
+    "quadruped",
+    "biped",
+    "bipedal",
+)
 
 
 def classify_research_domains(paper: PaperLike) -> list[str]:
@@ -282,6 +306,8 @@ def domain_rule_matches(name: str, text: str, keywords: Iterable[str]) -> bool:
         return matches_vla_topic(text)
     if name == "Robot Learning / Policy":
         return matches_robot_learning_policy(text)
+    if name == "Humanoid / Legged Robots":
+        return matches_humanoid_legged_robot(text)
     if name == "Safety / Control":
         return matches_safety_control(text)
     if name == "Benchmark / Dataset / Evaluation":
@@ -297,6 +323,14 @@ def matches_robot_learning_policy(text: str) -> bool:
     has_robot_context = any(keyword_matches(term, text) for term in ROBOTICS_CONTEXT_TERMS)
     has_policy_learning = any(keyword_matches(term, text) for term in ROBOT_POLICY_LEARNING_TERMS)
     return has_robot_context and has_policy_learning
+
+
+def matches_humanoid_legged_robot(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in LEGGED_ROBOT_EXPLICIT_TERMS):
+        return True
+    has_locomotion = keyword_matches("locomotion", text)
+    has_robot_context = any(keyword_matches(term, text) for term in LOCOMOTION_ROBOT_CONTEXT_TERMS)
+    return has_locomotion and has_robot_context
 
 
 def matches_safety_control(text: str) -> bool:
@@ -328,19 +362,34 @@ def matches_vla_topic(text: str) -> bool:
 
 
 def keyword_matches(keyword: str, text: str) -> bool:
-    return keyword in text or searchable_text(keyword) in text
+    keyword_text = normalize_match_text(keyword)
+    haystack = f" {normalize_match_text(text)} "
+    needle = f" {keyword_text} "
+    return bool(keyword_text) and needle in haystack
 
 
 def searchable_text(*values: object) -> str:
     text = " ".join(str(value or "") for value in values)
-    text = re.sub(r"[-_/]+", " ", text.lower())
+    text = re.sub(r"[-_/‐‑‒–—―]+", " ", text.lower())
     return re.sub(r"\s+", " ", text)
+
+
+def normalize_match_text(value: object) -> str:
+    text = searchable_text(value)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def is_robotics_paper(text: str, feed_names: Iterable[object]) -> bool:
     if any("robot" in str(name).lower() or "cs.ro" in str(name).lower() for name in feed_names):
         return True
-    return any(keyword in text for keyword in ("robot", "robotic", "embodied", "manipulation", "locomotion"))
+    if any(keyword_matches(term, text) for term in ("robot", "robotic", "embodied")):
+        return True
+    if keyword_matches("manipulation", text) and any(
+        keyword_matches(term, text) for term in ("robot", "robotic", "bimanual", "dexterous")
+    ):
+        return True
+    return matches_humanoid_legged_robot(text)
 
 
 def normalized_feed_topics(feed_names: Iterable[object]) -> list[str]:

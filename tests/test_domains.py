@@ -134,3 +134,52 @@ def test_robot_imitation_learning_still_matches_robot_policy():
     assert "Robot Learning / Policy" in domains
     assert "Manipulation / Dexterous Hands" in domains
     assert "Robotics / Embodied AI" in domains
+
+
+def test_vla_matching_accepts_abbreviation_full_name_and_separators():
+    titles = [
+        "A VLA Flow Model for General Robot Control",
+        "Vision Language Action Policies for Robot Manipulation",
+        "Vision/Language/Action Controllers for Mobile Manipulation",
+        "Vision–Language–Action Model for Robot Control",
+    ]
+
+    for index, title in enumerate(titles):
+        paper = Paper(
+            arxiv_id=f"2606.1120{index}v1",
+            title=title,
+            abstract="We study robot policies for manipulation and control.",
+            feed_names=["arXiv"],
+        )
+
+        domains = classify_research_domains(paper)
+
+        assert "Vision-Language-Action" in domains
+
+
+def test_vlm_action_understanding_without_robot_policy_context_is_not_vla():
+    paper = Paper(
+        arxiv_id="2606.11210v1",
+        title="Self-guided Visual Reasoning in VLM for Fine-grained Action Understanding",
+        abstract="We study video action understanding and visual reasoning.",
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" not in domains
+    assert "Robotics / Embodied AI" not in domains
+
+
+def test_biological_locomotion_without_robot_context_is_not_robotics():
+    paper = Paper(
+        arxiv_id="2606.11211v1",
+        title="Data-driven Geometric Phase in Biological Locomotion",
+        abstract="We analyze locomotion patterns in biological systems.",
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Robotics / Embodied AI" not in domains
+    assert "Humanoid / Legged Robots" not in domains

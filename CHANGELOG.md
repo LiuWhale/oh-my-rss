@@ -7,6 +7,18 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-06-23
+
+### Fixed
+
+- Normalize category keyword matching across abbreviations, full names, spaces,
+  slashes, hyphens, and Unicode dashes so variants such as `VLA`,
+  `Vision-Language-Action`, `Vision/Language/Action`, and
+  `Vision–Language–Action` are treated consistently.
+- Tighten VLA and robotics context matching so visual action understanding and
+  biological locomotion papers are not pulled into robot VLA or robotics feeds
+  without robot/policy/control context.
+
 ## [0.1.8] - 2026-06-22
 
 ### Fixed
