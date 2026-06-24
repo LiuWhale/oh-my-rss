@@ -7,6 +7,11 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add a Simplified Chinese README and language links between the English and
+  Chinese documentation entry points.
+
 ## [0.1.15] - 2026-06-24
 
 ### Fixed

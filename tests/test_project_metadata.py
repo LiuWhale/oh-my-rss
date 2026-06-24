@@ -40,10 +40,23 @@ def test_readme_references_existing_github_cover():
     assert Path("assets/github-cover.png").is_file()
 
 
+def test_readme_supports_english_and_simplified_chinese():
+    english = Path("README.md").read_text(encoding="utf-8")
+    chinese_path = Path("README.zh-CN.md")
+    chinese = chinese_path.read_text(encoding="utf-8")
+
+    assert chinese_path.is_file()
+    assert "README.zh-CN.md" in english
+    assert "README.md" in chinese
+    assert "RSS 原生 AI 科研雷达" in chinese
+    assert "快速开始" in chinese
+
+
 def test_source_distribution_manifest_includes_cover_assets():
     manifest = Path("MANIFEST.in").read_text(encoding="utf-8")
 
     assert "graft assets" in manifest
+    assert "README.zh-CN.md" in manifest
     assert "scripts/make-github-cover.py" in manifest
 
 

@@ -1,3 +1,4 @@
 include CHANGELOG.md
+include README.zh-CN.md
 graft assets
 include scripts/make-github-cover.py
