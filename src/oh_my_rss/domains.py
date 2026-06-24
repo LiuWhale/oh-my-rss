@@ -155,7 +155,6 @@ VLA_VISION_LANGUAGE_TERMS = (
     "vision-language",
     "visual language",
     "vlm",
-    "multimodal",
 )
 VLA_ACTION_TERMS = (
     "action model",

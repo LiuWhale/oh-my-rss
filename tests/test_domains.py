@@ -243,6 +243,29 @@ def test_vlm_action_understanding_without_robot_policy_context_is_not_vla():
     assert "Robotics / Embodied AI" not in domains
 
 
+def test_navigation_world_model_with_multimodal_action_prediction_is_not_vla():
+    paper = Paper(
+        arxiv_id="2606.24101v1",
+        title="NavWM: A Unified Navigation World Model for Foresight-Driven Planning",
+        abstract=(
+            "Conventional visual navigation policies often struggle with myopic decision-making. "
+            "NavWM is a unified navigation world model that integrates latent world reasoning, "
+            "multimodal action prediction, and "
+            "controllable visual generation for robot control. An anchor-based multimodal "
+            "trajectory forecasting framework generates diverse actions, and visual foresight "
+            "selects the optimal path for closed-loop planning."
+        ),
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" not in domains
+    assert "Navigation / Planning" in domains
+    assert "Robot Learning / Policy" in domains
+    assert "Embodied AI / Foundation Models" in domains
+
+
 def test_vla_title_without_abstract_or_keyword_support_is_not_enough():
     paper = Paper(
         arxiv_id="2606.11212v1",

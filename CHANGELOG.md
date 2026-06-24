@@ -7,6 +7,12 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Avoid classifying navigation world-model papers as VLA from generic
+  `multimodal` action or trajectory wording unless explicit VLA,
+  vision-language, language-conditioned, or VLM evidence is present.
+
 ## [0.1.14] - 2026-06-24
 
 ### Fixed
