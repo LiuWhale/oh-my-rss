@@ -7,6 +7,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.15] - 2026-06-24
+
 ### Fixed
 
 - Avoid classifying navigation world-model papers as VLA from generic
