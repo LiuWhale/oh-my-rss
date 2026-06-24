@@ -26,8 +26,13 @@ def test_select_pdf_context_prioritizes_method_and_experiment_sections():
 def test_render_pdf_first_page_preview_writes_png_asset(tmp_path):
     pdf_path = tmp_path / "paper.pdf"
     doc = pymupdf.open()
-    page = doc.new_page(width=240, height=180)
-    page.insert_text((36, 72), "Main Figure")
+    page = doc.new_page(width=480, height=360)
+    page.draw_rect((32, 48, 448, 260), color=(0.1, 0.2, 0.7), fill=(0.9, 0.94, 1.0))
+    page.draw_circle((380, 110), 46, color=(0.9, 0.3, 0.2), fill=(1.0, 0.75, 0.65))
+    for row in range(8):
+        y = 88 + row * 20
+        page.draw_line((72, y), (310, y + 10), color=(0.15, 0.35, 0.35), width=1.2)
+    page.insert_text((60, 310), "Main Figure: preview fixture with enough content")
     doc.save(pdf_path)
     doc.close()
 
