@@ -17,8 +17,18 @@ jobs:
       - run: python -m ruff check .
       - name: Run pytest
         run: |
-          set -o pipefail
-          python -m pytest -q 2>&1 | tee pytest.log
+          set +e
+          python -m pytest -q > pytest.log 2>&1
+          status=$?
+          cat pytest.log
+          if [ "$status" -ne 0 ]; then
+            message="$(
+              tail -n 120 pytest.log \
+                | python -c 'import sys; print(sys.stdin.read().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))'
+            )"
+            echo "::error title=pytest failure::$message"
+            exit "$status"
+          fi
       - name: Publish pytest failure summary
         if: failure()
         run: |
