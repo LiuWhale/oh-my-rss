@@ -39,13 +39,27 @@ def backup_db(db_path: Path, backup_dir: Path) -> Path:
     return target
 
 
-def update_summary_links(db_path: Path, arxiv_id: str, entry_ids: list[int], summary_url: str) -> int:
+def normalize_entry_ids(entry_ids: list[object]) -> list[int]:
+    normalized: list[int] = []
+    seen: set[int] = set()
+    for value in entry_ids:
+        try:
+            entry_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if entry_id not in seen:
+            seen.add(entry_id)
+            normalized.append(entry_id)
+    return sorted(normalized)
+
+
+def update_summary_links(db_path: Path, arxiv_id: str, entry_ids: list[object], summary_url: str) -> int:
     snippet = make_summary_snippet(arxiv_id, summary_url)
     con = sqlite3.connect(db_path)
     try:
         updated = 0
         now = int(time.time())
-        for entry_id in sorted(set(entry_ids)):
+        for entry_id in normalize_entry_ids(entry_ids):
             row = con.execute("SELECT content FROM entry WHERE id = ?", (entry_id,)).fetchone()
             if not row:
                 continue

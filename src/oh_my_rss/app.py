@@ -9,7 +9,7 @@ from .arxiv import Paper, group_entries
 from .arxiv_discovery import WIDE_ARXIV_KEYWORDS, fetch_wide_arxiv_papers, merge_paper_candidates
 from .codex import run_codex_summary
 from .config import AppConfig
-from .db import backup_db, fetch_freshrss_entries, update_summary_links
+from .db import backup_db, fetch_freshrss_entries, normalize_entry_ids, update_summary_links
 from .pdf import download_pdf, extract_pdf_text, render_pdf_first_page_preview, select_pdf_context
 from .prompt import build_summary_prompt
 from .publisher import (
@@ -177,7 +177,7 @@ def run_once(
             {
                 "arxiv_id": paper.arxiv_id,
                 "title": paper.title,
-                "entry_ids": paper.entry_ids,
+                "entry_ids": normalize_entry_ids(paper.entry_ids),
                 "feed_names": paper.feed_names,
                 "hero_image_url": paper.hero_image_url,
                 "hero_image_error": paper.hero_image_error,
@@ -220,7 +220,7 @@ def run_once(
             record["freshrss_entries_updated"] = update_summary_links(
                 config.freshrss.db_path,
                 paper.arxiv_id,
-                paper.entry_ids,
+                normalize_entry_ids(paper.entry_ids),
                 str(publish_record["url"]),
             )
         changed.append(record.copy())

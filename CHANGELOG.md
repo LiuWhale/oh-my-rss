@@ -7,6 +7,14 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-06-24
+
+### Fixed
+
+- Normalize FreshRSS entry IDs before updating generated Codex summary links,
+  so mixed string and integer IDs from existing state files do not break link
+  repair or RSS-only refresh runs.
+
 ## [0.1.10] - 2026-06-23
 
 ### Fixed
