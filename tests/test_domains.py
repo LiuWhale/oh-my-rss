@@ -328,6 +328,33 @@ def test_vlm_scene_graph_robotics_application_is_not_vla():
     assert "Robotics / Embodied AI" in domains
 
 
+def test_vla_baselines_do_not_make_failure_detection_paper_vla():
+    paper = Paper(
+        arxiv_id="2606.23085v1",
+        title=(
+            "Foresight: Failure Detection for Long-Horizon Robotic Manipulation "
+            "with Action-Conditioned World Model Latents"
+        ),
+        abstract=(
+            "Long-horizon tasks are common in real-world robotic deployments, yet "
+            "failure detection for such tasks remains underexplored. We present "
+            "Foresight, a failure detection framework that monitors manipulation "
+            "trajectories using latent representations from an action-conditioned "
+            "world model. We evaluate Foresight with state-of-the-art "
+            "vision-language-action policies in simulation on LIBERO-Long, "
+            "ManiSkill-Long, and BEHAVIOR-1K, and validate it on real robots."
+        ),
+        feed_names=["arXiv VLA / Vision-Language-Action"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" not in domains
+    assert "Manipulation / Dexterous Hands" in domains
+    assert "Embodied AI / Foundation Models" in domains
+    assert "Robotics / Embodied AI" in domains
+
+
 def test_vla_title_without_abstract_or_keyword_support_is_not_enough():
     paper = Paper(
         arxiv_id="2606.11212v1",

@@ -17,6 +17,8 @@ Keep a Changelog. Version tags use semantic versioning.
 - Avoid classifying VLM/LLM-based 3D semantic scene-graph papers as VLA merely
   because they mention robotics applications; VLA now needs explicit action,
   policy, control, or manipulation evidence.
+- Avoid classifying failure-detection or monitoring papers as VLA merely
+  because they evaluate against existing Vision-Language-Action policies.
 
 ## [0.1.15] - 2026-06-24
 

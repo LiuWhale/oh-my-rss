@@ -186,6 +186,12 @@ VLA_ACTION_TERMS = (
     "manipulation",
     "actuation",
 )
+VLA_REFERENCE_ONLY_PATTERNS = (
+    r"\b(?:evaluate|evaluates|evaluated|evaluating)\b.{0,120}\b(?:with|using|against|on)\b.{0,80}\b(?:vision language action|vla)\b.{0,50}\b(?:policy|policies|model|models|controller|controllers)\b",
+    r"\b(?:compare|compares|compared|comparing)\b.{0,120}\b(?:with|against|to)\b.{0,80}\b(?:vision language action|vla)\b.{0,50}\b(?:policy|policies|model|models|controller|controllers)\b",
+    r"\b(?:validate|validates|validated|validating)\b.{0,120}\b(?:with|using|against|on)\b.{0,80}\b(?:vision language action|vla)\b.{0,50}\b(?:policy|policies|model|models|controller|controllers)\b",
+    r"\b(?:benchmark|benchmarks|benchmarked|benchmarking)\b.{0,120}\b(?:with|using|against|on)\b.{0,80}\b(?:vision language action|vla)\b.{0,50}\b(?:policy|policies|model|models|controller|controllers)\b",
+)
 GENERATED_CATEGORY_NAMES = {
     "Robotics / Embodied AI",
     "VLA / Multimodal Agents",
@@ -506,15 +512,19 @@ def matches_embodied_foundation(text: str) -> bool:
 
 def matches_vla_topic(evidence: ClassificationEvidence) -> bool:
     text = evidence.semantic_text
+    title_says_vla = any(keyword_matches(term, evidence.title_text) for term in VLA_EXPLICIT_TERMS)
     if any(keyword_matches(term, text) for term in VLA_EXPLICIT_TERMS):
+        if not title_says_vla and is_vla_reference_only(text):
+            return False
         return True
     has_vision_language = any(keyword_matches(term, text) for term in VLA_VISION_LANGUAGE_TERMS)
     has_action = any(keyword_matches(term, text) for term in VLA_ACTION_TERMS)
     if has_vision_language and has_action:
+        if not title_says_vla and is_vla_reference_only(text):
+            return False
         return True
     if not evidence.has_support:
         return False
-    title_says_vla = any(keyword_matches(term, evidence.title_text) for term in VLA_EXPLICIT_TERMS)
     title_says_vision_language = any(keyword_matches(term, evidence.title_text) for term in VLA_VISION_LANGUAGE_TERMS)
     support_has_robot_action_context = any(
         keyword_matches(term, text)
@@ -528,6 +538,11 @@ def matches_vla_topic(evidence: ClassificationEvidence) -> bool:
         )
     )
     return (title_says_vla or title_says_vision_language) and support_has_robot_action_context
+
+
+def is_vla_reference_only(text: str) -> bool:
+    normalized = f" {normalize_match_text(text)} "
+    return any(re.search(pattern, normalized) for pattern in VLA_REFERENCE_ONLY_PATTERNS)
 
 
 def keyword_matches(keyword: str, text: str) -> bool:
