@@ -12,6 +12,9 @@ Keep a Changelog. Version tags use semantic versioning.
 - Avoid classifying navigation world-model papers as VLA from generic
   `multimodal` action or trajectory wording unless explicit VLA,
   vision-language, language-conditioned, or VLM evidence is present.
+- Require explicit domain evidence for paper categories instead of deriving
+  fields from source feed labels or generic words such as `policy`,
+  `navigation`, `manipulation`, `control`, or `learning`.
 
 ## [0.1.14] - 2026-06-24
 

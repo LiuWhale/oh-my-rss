@@ -110,19 +110,19 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
 
     assert {item["slug"] for item in categories} == {
         "robotics-embodied-ai",
-        "vision",
+        "uncategorized",
     }
 
     robotics = ElementTree.parse(tmp_path / "categories" / "robotics-embodied-ai.xml")
-    vision = ElementTree.parse(tmp_path / "categories" / "vision.xml")
+    uncategorized = ElementTree.parse(tmp_path / "categories" / "uncategorized.xml")
     category_index = tmp_path / "categories" / "index.json"
     category_opml = tmp_path / "categories" / "opml.xml"
 
     assert robotics.findtext("./channel/title") == "Oh My RSS - Robotics / Embodied AI"
     assert robotics.findtext("./channel/item/title") == "Robot Paper"
     assert [item.text for item in robotics.findall("./channel/item/category")] == ["Robotics / Embodied AI"]
-    assert vision.findtext("./channel/item/title") == "Vision Paper"
-    assert [item.text for item in vision.findall("./channel/item/category")] == ["Vision"]
+    assert uncategorized.findtext("./channel/item/title") == "Vision Paper"
+    assert [item.text for item in uncategorized.findall("./channel/item/category")] == ["Uncategorized"]
     assert not (tmp_path / "categories" / "arxiv-robotics-latest-cs-ro.xml").exists()
     assert not (tmp_path / "categories" / "arxiv-navigation.xml").exists()
     assert not (tmp_path / "categories" / "arxiv-vision.xml").exists()
@@ -197,7 +197,7 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
                 "generated_at": "2026-06-11T18:00:00+08:00",
                 "research_domains": ["Manipulation"],
                 "venue": "RAL",
-                "summary_excerpt": "A robot manipulation paper.",
+                "summary_excerpt": "A cloth manipulation paper.",
             },
         ],
         generated_at="2026-06-12T09:00:00+08:00",
@@ -267,7 +267,7 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
                 "generated_at": "2026-06-12T18:00:00+08:00",
                 "research_domains": ["Manipulation / Dexterous Hands"],
                 "venue": "ICRA",
-                "summary_excerpt": "A dexterous hand paper.",
+                "summary_excerpt": "A cloth manipulation paper.",
             },
         ],
         generated_at="2026-06-12T09:00:00+08:00",

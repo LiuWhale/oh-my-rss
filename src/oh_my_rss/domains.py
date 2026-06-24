@@ -176,12 +176,27 @@ GENERATED_CATEGORY_NAMES = {
     "VLA / Vision-Language-Action",
     *(name for name, _keywords in DOMAIN_RULES),
 }
+ROBOTICS_EXPLICIT_TERMS = (
+    "robot",
+    "robots",
+    "robotic",
+    "robotics",
+    "humanoid",
+    "quadruped",
+    "legged robot",
+    "legged robotics",
+    "drone",
+    "uav",
+    "autonomous vehicle",
+    "mobile robot",
+    "embodied ai",
+    "embodied agent",
+)
 ROBOTICS_CONTEXT_TERMS = (
     "robot",
     "robots",
     "robotic",
     "robotics",
-    "manipulation",
     "dexterous",
     "humanoid",
     "legged",
@@ -189,8 +204,55 @@ ROBOTICS_CONTEXT_TERMS = (
     "bimanual",
     "mobile manipulator",
     "locomotion",
-    "navigation",
     "embodied",
+)
+MANIPULATION_EXPLICIT_TERMS = (
+    "robot manipulation",
+    "robotic manipulation",
+    "dexterous manipulation",
+    "cloth manipulation",
+    "deformable object manipulation",
+    "contact rich manipulation",
+    "contact-rich manipulation",
+    "mobile manipulation",
+    "bimanual manipulation",
+    "loco manipulation",
+    "loco-manipulation",
+    "in hand",
+    "in-hand",
+    "hand object",
+    "hand-object",
+)
+MANIPULATION_ACTION_TERMS = (
+    "manipulation",
+    "grasp",
+    "grasping",
+    "pick and place",
+    "pick-and-place",
+)
+NAVIGATION_EXPLICIT_TERMS = (
+    "robot navigation",
+    "visual navigation",
+    "vision based navigation",
+    "vision-based navigation",
+    "object navigation",
+    "goal navigation",
+    "path planning",
+    "motion planning",
+    "sampling based planning",
+    "sampling-based planning",
+    "autonomous driving",
+    "mobile robot",
+)
+NAVIGATION_CONTEXT_TERMS = (
+    "robot",
+    "robots",
+    "robotic",
+    "robotics",
+    "mobile",
+    "autonomous",
+    "embodied",
+    "vehicle",
 )
 ROBOT_POLICY_EXPLICIT_TERMS = (
     "diffusion policy",
@@ -341,8 +403,6 @@ def classify_research_domains(paper: PaperLike) -> list[str]:
     domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, evidence, keywords)]
     if is_robotics_paper(evidence.semantic_text, getattr(paper, "feed_names", [])):
         domains.append("Robotics / Embodied AI")
-    if not domains:
-        domains.extend(normalized_feed_topics(getattr(paper, "feed_names", [])))
     return unique_strings(domains) or ["Uncategorized"]
 
 
@@ -351,18 +411,6 @@ def classify_record_domains(record: dict[str, object]) -> list[str]:
     domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, evidence, keywords)]
     if is_robotics_paper(evidence.semantic_text, as_iterable(record.get("feed_names"))):
         domains.append("Robotics / Embodied AI")
-    if not domains:
-        domains.extend(
-            normalized_feed_topics(
-                [
-                    *as_iterable(record.get("source_feed_names")),
-                    *as_iterable(record.get("venue_names")),
-                    *as_iterable(record.get("feed_names")),
-                ]
-            )
-        )
-    if not domains and not evidence.full_text.strip():
-        domains.extend(normalize_topic(item) for item in as_iterable(record.get("research_domains")))
     return unique_strings(domains) or ["Uncategorized"]
 
 
@@ -372,8 +420,12 @@ def domain_rule_matches(name: str, evidence: ClassificationEvidence, keywords: I
         return matches_vla_topic(evidence)
     if name == "Robot Learning / Policy":
         return matches_robot_learning_policy(text)
+    if name == "Manipulation / Dexterous Hands":
+        return matches_manipulation(text)
     if name == "Humanoid / Legged Robots":
         return matches_humanoid_legged_robot(text)
+    if name == "Navigation / Planning":
+        return matches_navigation_planning(text)
     if name == "Safety / Control":
         return matches_safety_control(text)
     if name == "Benchmark / Dataset / Evaluation":
@@ -386,9 +438,26 @@ def domain_rule_matches(name: str, evidence: ClassificationEvidence, keywords: I
 def matches_robot_learning_policy(text: str) -> bool:
     if any(keyword_matches(term, text) for term in ROBOT_POLICY_EXPLICIT_TERMS):
         return True
-    has_robot_context = any(keyword_matches(term, text) for term in ROBOTICS_CONTEXT_TERMS)
+    has_robot_context = is_robotics_paper(text, [])
     has_policy_learning = any(keyword_matches(term, text) for term in ROBOT_POLICY_LEARNING_TERMS)
     return has_robot_context and has_policy_learning
+
+
+def matches_manipulation(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in MANIPULATION_EXPLICIT_TERMS):
+        return True
+    has_action = any(keyword_matches(term, text) for term in MANIPULATION_ACTION_TERMS)
+    return has_action and is_robotics_paper(text, [])
+
+
+def matches_navigation_planning(text: str) -> bool:
+    if any(keyword_matches(term, text) for term in NAVIGATION_EXPLICIT_TERMS):
+        return True
+    has_nav_or_plan = any(
+        keyword_matches(term, text) for term in ("navigation", "planning", "planner", "trajectory planning")
+    )
+    has_context = any(keyword_matches(term, text) for term in NAVIGATION_CONTEXT_TERMS)
+    return has_nav_or_plan and has_context
 
 
 def matches_humanoid_legged_robot(text: str) -> bool:
@@ -465,13 +534,9 @@ def normalize_match_text(value: object) -> str:
 
 
 def is_robotics_paper(text: str, feed_names: Iterable[object]) -> bool:
-    if any("robot" in str(name).lower() or "cs.ro" in str(name).lower() for name in feed_names):
+    if any(keyword_matches(term, text) for term in ROBOTICS_EXPLICIT_TERMS):
         return True
-    if any(keyword_matches(term, text) for term in ("robot", "robots", "robotic", "robotics", "embodied")):
-        return True
-    if keyword_matches("manipulation", text) and any(
-        keyword_matches(term, text) for term in ("robot", "robotic", "bimanual", "dexterous")
-    ):
+    if keyword_matches("manipulation", text) and any(keyword_matches(term, text) for term in ROBOTICS_CONTEXT_TERMS):
         return True
     return matches_humanoid_legged_robot(text)
 

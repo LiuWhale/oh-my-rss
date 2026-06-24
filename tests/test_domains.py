@@ -24,7 +24,7 @@ def test_classify_research_domains_combines_robotics_topics_from_title_and_abstr
     assert "Robotics / Embodied AI" in domains
 
 
-def test_classify_research_domains_preserves_specific_arxiv_topic_when_no_keyword_matches():
+def test_classify_research_domains_does_not_use_source_feed_without_explicit_evidence():
     paper = Paper(
         arxiv_id="2606.11185v1",
         title="A theorem about graph spectra",
@@ -34,7 +34,39 @@ def test_classify_research_domains_preserves_specific_arxiv_topic_when_no_keywor
 
     domains = classify_research_domains(paper)
 
-    assert domains == ["Machine Learning (cs.LG)"]
+    assert domains == ["Uncategorized"]
+
+
+def test_generic_navigation_planning_terms_do_not_match_without_domain_objects():
+    paper = Paper(
+        arxiv_id="2606.11192v1",
+        title="Navigation Strategies for Legal Document Search",
+        abstract=(
+            "We study navigation and planning policies for browsing legal archives "
+            "and controlling query expansion in a web search interface."
+        ),
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Navigation / Planning" not in domains
+    assert "Robot Learning / Policy" not in domains
+    assert "Robotics / Embodied AI" not in domains
+
+
+def test_ranking_manipulation_does_not_match_robot_manipulation():
+    paper = Paper(
+        arxiv_id="2606.11193v1",
+        title="Ranking Manipulation in Tournament Search Systems",
+        abstract="We analyze manipulation attacks against ranking and recommendation systems.",
+        feed_names=["arXiv"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Manipulation / Dexterous Hands" not in domains
+    assert "Robotics / Embodied AI" not in domains
 
 
 def test_classify_research_domains_does_not_reinforce_stale_vla_feed_label():
