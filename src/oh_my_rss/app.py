@@ -27,7 +27,7 @@ from .publisher import (
     publish_trending_topics,
     write_manifest,
 )
-from .state import load_state, save_state
+from .state import expire_stale_running_records, load_state, save_state
 from .source_health import (
     build_source_health_report,
     latest_source_health_records,
@@ -107,6 +107,8 @@ def run_once(
     config.site.output_dir.mkdir(parents=True, exist_ok=True)
     state_path = config.runtime.state_dir / "state.json"
     state = load_state(state_path)
+    if expire_stale_running_records(state):
+        save_state(state_path, state)
     generated_at = now_iso()
     source_health_records: list[dict[str, object]] = []
     rows = fetch_freshrss_entries(

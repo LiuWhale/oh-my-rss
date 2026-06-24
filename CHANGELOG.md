@@ -7,6 +7,14 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-06-24
+
+### Fixed
+
+- Recover stale `running` paper records automatically after six hours, so a
+  crashed or interrupted summary job cannot leave one paper permanently stuck
+  in an in-progress state.
+
 ## [0.1.11] - 2026-06-24
 
 ### Fixed
