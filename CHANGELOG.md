@@ -12,6 +12,12 @@ Keep a Changelog. Version tags use semantic versioning.
 - Add a Simplified Chinese README and language links between the English and
   Chinese documentation entry points.
 
+### Fixed
+
+- Avoid classifying VLM/LLM-based 3D semantic scene-graph papers as VLA merely
+  because they mention robotics applications; VLA now needs explicit action,
+  policy, control, or manipulation evidence.
+
 ## [0.1.15] - 2026-06-24
 
 ### Fixed

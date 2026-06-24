@@ -298,6 +298,36 @@ def test_navigation_world_model_with_multimodal_action_prediction_is_not_vla():
     assert "Embodied AI / Foundation Models" in domains
 
 
+def test_vlm_scene_graph_robotics_application_is_not_vla():
+    paper = Paper(
+        arxiv_id="2606.23312v1",
+        title=(
+            "From Pixels to Concepts: Growing Rich 3D Semantic Scene Graph Forests "
+            "utilizing Foundation Models"
+        ),
+        abstract=(
+            "Operating in complex real-world environments requires robots to understand "
+            "their surroundings on a functional semantic level. Hierarchical 3D scene "
+            "graphs integrate geometric, semantic, and relational data within a unified "
+            "spatial framework. This paper explores foundation models to build forests "
+            "of 3D scene graphs with open semantic relationships to improve scene "
+            "understanding and robotic task execution. Instance-specific concept-nodes "
+            "and relationships are first identified by a VLM and extended upon by a LLM. "
+            "Downstream suitability is demonstrated in an open-vocabulary object-retrieval "
+            "task using ScanNet data and a real-world indoor deployment using a Boston "
+            "Dynamics Spot."
+        ),
+        feed_names=["arXiv VLA / Vision-Language-Action"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Vision-Language-Action" not in domains
+    assert "3D Vision / Perception" in domains
+    assert "Embodied AI / Foundation Models" in domains
+    assert "Robotics / Embodied AI" in domains
+
+
 def test_vla_title_without_abstract_or_keyword_support_is_not_enough():
     paper = Paper(
         arxiv_id="2606.11212v1",
