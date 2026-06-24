@@ -37,7 +37,19 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
       - run: python -m ruff check .
-      - run: python -m pytest -q
+      - name: Run pytest
+        run: |
+          set -o pipefail
+          python -m pytest -q 2>&1 | tee pytest.log
+      - name: Publish pytest failure summary
+        if: failure()
+        run: |
+          {
+            echo "### pytest failure"
+            echo '```text'
+            tail -n 200 pytest.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - run: python -m build
 
       - name: Extract release notes
@@ -106,8 +118,20 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - if: steps.release.outputs.exists == 'false'
         run: python -m ruff check .
-      - if: steps.release.outputs.exists == 'false'
-        run: python -m pytest -q
+      - name: Run pytest
+        if: steps.release.outputs.exists == 'false'
+        run: |
+          set -o pipefail
+          python -m pytest -q 2>&1 | tee pytest.log
+      - name: Publish pytest failure summary
+        if: failure()
+        run: |
+          {
+            echo "### pytest failure"
+            echo '```text'
+            tail -n 200 pytest.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - if: steps.release.outputs.exists == 'false'
         run: python -m build
 
