@@ -92,6 +92,95 @@ def select_papers(papers: list[Paper], state: dict[str, object], limit: int, for
     return selected
 
 
+def done_records(records: dict[object, object]) -> list[dict[str, object]]:
+    return [item for item in records.values() if isinstance(item, dict) and item.get("status") == "done"]
+
+
+def publish_outputs(
+    config: AppConfig,
+    records: dict[object, object],
+    source_health_report: dict[str, object],
+    generated_at: str,
+) -> None:
+    all_done = done_records(records)
+    publish_index(
+        all_done,
+        config.site.output_dir,
+        generated_at=generated_at,
+        public_base_url=config.site.public_base_url,
+    )
+    publish_feed(
+        all_done,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    category_records = publish_category_feeds(
+        all_done,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_subscription_opml(
+        category_records,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+    )
+    publish_feed_directory(
+        category_records,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    monthly_reports = build_monthly_reports(all_done, generated_at=generated_at)
+    trending_topics = build_trending_topics(all_done, generated_at=generated_at)
+    keyword_trends = build_keyword_trends(all_done, generated_at=generated_at)
+    publish_monthly_reports(
+        monthly_reports,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_trending_topics(
+        trending_topics,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_keyword_trends(
+        keyword_trends,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_source_health_report(
+        source_health_report,
+        config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_status(
+        all_done,
+        category_records=category_records,
+        monthly_reports=monthly_reports,
+        trending_topics=trending_topics,
+        keyword_trends=keyword_trends,
+        output_dir=config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    publish_site_discovery(
+        all_done,
+        monthly_reports=monthly_reports,
+        trending_topics=trending_topics,
+        keyword_trends=keyword_trends,
+        output_dir=config.site.output_dir,
+        public_base_url=config.site.public_base_url,
+        generated_at=generated_at,
+    )
+    write_manifest(all_done, config.site.output_dir)
+
+
 def run_once(
     config: AppConfig,
     *,
@@ -224,88 +313,13 @@ def run_once(
                 paper.arxiv_id,
                 normalize_entry_ids(paper.entry_ids),
                 str(publish_record["url"]),
-            )
+        )
         changed.append(record.copy())
         save_state(state_path, state)
+        publish_outputs(config, records, source_health_report, now_iso())
         time.sleep(0.1)
 
-    all_done = [item for item in records.values() if isinstance(item, dict) and item.get("status") == "done"]
-    generated_at = now_iso()
-    publish_index(
-        all_done,
-        config.site.output_dir,
-        generated_at=generated_at,
-        public_base_url=config.site.public_base_url,
-    )
-    publish_feed(
-        all_done,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    category_records = publish_category_feeds(
-        all_done,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_subscription_opml(
-        category_records,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-    )
-    publish_feed_directory(
-        category_records,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    monthly_reports = build_monthly_reports(all_done, generated_at=generated_at)
-    trending_topics = build_trending_topics(all_done, generated_at=generated_at)
-    keyword_trends = build_keyword_trends(all_done, generated_at=generated_at)
-    publish_monthly_reports(
-        monthly_reports,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_trending_topics(
-        trending_topics,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_keyword_trends(
-        keyword_trends,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_source_health_report(
-        source_health_report,
-        config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_status(
-        all_done,
-        category_records=category_records,
-        monthly_reports=monthly_reports,
-        trending_topics=trending_topics,
-        keyword_trends=keyword_trends,
-        output_dir=config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    publish_site_discovery(
-        all_done,
-        monthly_reports=monthly_reports,
-        trending_topics=trending_topics,
-        keyword_trends=keyword_trends,
-        output_dir=config.site.output_dir,
-        public_base_url=config.site.public_base_url,
-        generated_at=generated_at,
-    )
-    write_manifest(all_done, config.site.output_dir)
+    if not changed:
+        publish_outputs(config, records, source_health_report, now_iso())
     save_state(state_path, state)
     return changed

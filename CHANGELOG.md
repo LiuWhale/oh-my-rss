@@ -7,6 +7,14 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.13] - 2026-06-24
+
+### Fixed
+
+- Rebuild the public main RSS feed, category feeds, reports, and status files
+  after each generated summary instead of waiting for the full batch to finish,
+  so RSS clients can see new papers during long summary runs.
+
 ## [0.1.12] - 2026-06-24
 
 ### Fixed
