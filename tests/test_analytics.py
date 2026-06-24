@@ -33,12 +33,12 @@ def test_build_monthly_reports_counts_directions_sources_and_growth():
     june = reports[0]
     assert june.month == "2026-06"
     assert june.total_papers == 2
-    assert june.direction_counts["Robot Learning"] == 1
+    assert june.direction_counts["Manipulation / Dexterous Hands"] == 2
     assert june.direction_counts["Vision-Language-Action"] == 1
     assert june.source_counts["arXiv"] == 1
     assert june.source_counts["RAL"] == 1
     assert june.direction_growth["Vision-Language-Action"] == 1
-    assert june.direction_growth["Robot Learning"] == 0
+    assert june.direction_growth["Manipulation / Dexterous Hands"] == 2
     assert june.top_papers[0].title == "June manipulation paper"
     assert june.trend_months == ["2026-05", "2026-06"]
 

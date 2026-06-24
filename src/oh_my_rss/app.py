@@ -268,6 +268,8 @@ def run_once(
             {
                 "arxiv_id": paper.arxiv_id,
                 "title": paper.title,
+                "abstract": paper.abstract,
+                "keywords": paper.keywords,
                 "entry_ids": normalize_entry_ids(paper.entry_ids),
                 "feed_names": paper.feed_names,
                 "hero_image_url": paper.hero_image_url,

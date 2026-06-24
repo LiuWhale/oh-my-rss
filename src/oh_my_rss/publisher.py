@@ -11,7 +11,7 @@ import unicodedata
 
 from .analytics import KeywordTrend, MonthlyReport, TrendingTopic
 from .arxiv import Paper
-from .domains import classify_research_domains
+from .domains import classify_record_domains, classify_research_domains
 from .reports import (
     render_direction_bars_svg,
     render_keyword_trends_index_html,
@@ -67,6 +67,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         "source_url": paper.abs_url,
         "pdf_url": paper.pdf_url,
         "title": paper.title,
+        "abstract": paper.abstract,
         "url": f"{public_base_url.rstrip('/')}/{name}",
         "detail_name": name,
         "generated_at": generated_at,
@@ -587,8 +588,7 @@ def render_source_health_html(report: dict[str, object]) -> str:
 
 
 def record_category_names(record: dict[str, object]) -> list[str]:
-    raw_names = record.get("research_domains") or record.get("feed_names", []) or []
-    return _unique_strings(normalize_category_name(name) for name in raw_names)
+    return _unique_strings(normalize_category_name(name) for name in classify_record_domains(record))
 
 
 def sync_duplicate_category_aliases(grouped: dict[str, list[dict[str, object]]]) -> None:

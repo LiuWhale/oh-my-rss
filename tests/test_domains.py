@@ -67,6 +67,78 @@ def test_classify_research_domains_keeps_explicit_vla_papers():
     assert "Vision-Language-Action" in domains
 
 
+def test_cloth_manipulation_is_not_slam_from_stale_discovery_feed():
+    paper = Paper(
+        arxiv_id="2606.24552v1",
+        title="Enabling Robust Cloth Manipulation via Inference-Time Simulator-in-the-Loop Refinement",
+        abstract=(
+            "We refine a robot manipulation policy for deformable cloth tasks using "
+            "inference-time simulator-in-the-loop rollouts and real robot feedback."
+        ),
+        feed_names=["arXiv SLAM定位建图 / Perception", "arXiv 操作抓取 / Manipulation"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "Manipulation / Dexterous Hands" in domains
+    assert "Robot Learning / Policy" in domains
+    assert "SLAM / Mapping / Localization" not in domains
+    assert "Vision-Language-Action" not in domains
+
+
+def test_open_vocabulary_relocalization_is_not_vla_without_action_evidence():
+    paper = Paper(
+        arxiv_id="2606.24767v1",
+        title="Compact Object-Level Representations with Open-Vocabulary Understanding for Indoor Visual Relocalization",
+        abstract=(
+            "The method builds object-level scene representations for indoor visual "
+            "relocalization and pose estimation from open-vocabulary perception."
+        ),
+        feed_names=["arXiv VLA / Vision-Language-Action"],
+    )
+
+    domains = classify_research_domains(paper)
+
+    assert "SLAM / Mapping / Localization" in domains
+    assert "3D Vision / Perception" in domains
+    assert "Vision-Language-Action" not in domains
+
+
+def test_stale_record_domains_are_recomputed_from_summary_excerpt():
+    record = {
+        "title": (
+            "One Polyp Identifies All: One-Shot Polyp Segmentation with SAM via "
+            "Cascaded Priors and Iterative Prompt Evolution"
+        ),
+        "summary_excerpt": "A medical image segmentation method for polyp masks using SAM priors.",
+        "research_domains": ["VLA / Multimodal Agents"],
+        "feed_names": ["VLA / Multimodal Agents"],
+    }
+
+    domains = classify_record_domains(record)
+
+    assert "3D Vision / Perception" in domains
+    assert "Vision-Language-Action" not in domains
+
+
+def test_summary_excerpt_can_recover_precise_domains_when_abstract_is_missing():
+    record = {
+        "title": "FT-WBC: Learning Fault-Tolerant Whole-Body Control for Legged Loco-Manipulation",
+        "summary_excerpt": (
+            "The paper learns fault-tolerant whole-body control for legged robot "
+            "loco-manipulation with robust control and sim-to-real evaluation."
+        ),
+        "research_domains": ["Robotics / Embodied AI", "Reinforcement Learning / Control"],
+        "feed_names": ["arXiv SLAM定位建图 / Perception"],
+    }
+
+    domains = classify_record_domains(record)
+
+    assert "Humanoid / Legged Robots" in domains
+    assert "Safety / Control" in domains
+    assert "SLAM / Mapping / Localization" not in domains
+
+
 def test_policy_word_without_robot_learning_context_does_not_match_robot_policy():
     paper = Paper(
         arxiv_id="2606.11187v1",

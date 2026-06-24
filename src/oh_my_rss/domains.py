@@ -83,6 +83,8 @@ DOMAIN_RULES: list[tuple[str, tuple[str, ...]]] = [
             "mapping",
             "localization",
             "place recognition",
+            "relocalization",
+            "visual relocalization",
             "visual odometry",
             "state estimation",
         ),
@@ -346,15 +348,22 @@ def classify_research_domains(paper: PaperLike) -> list[str]:
 
 
 def classify_record_domains(record: dict[str, object]) -> list[str]:
-    existing = record.get("research_domains")
-    if existing:
-        return unique_strings(normalize_topic(item) for item in as_iterable(existing))
     evidence = evidence_from_record(record)
     domains = [name for name, keywords in DOMAIN_RULES if domain_rule_matches(name, evidence, keywords)]
     if is_robotics_paper(evidence.semantic_text, as_iterable(record.get("feed_names"))):
         domains.append("Robotics / Embodied AI")
     if not domains:
-        domains.extend(normalized_feed_topics(as_iterable(record.get("feed_names"))))
+        domains.extend(
+            normalized_feed_topics(
+                [
+                    *as_iterable(record.get("source_feed_names")),
+                    *as_iterable(record.get("venue_names")),
+                    *as_iterable(record.get("feed_names")),
+                ]
+            )
+        )
+    if not domains and not evidence.full_text.strip():
+        domains.extend(normalize_topic(item) for item in as_iterable(record.get("research_domains")))
     return unique_strings(domains) or ["Uncategorized"]
 
 

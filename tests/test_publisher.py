@@ -74,6 +74,7 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
     assert "Robot Learning / Policy" in record["research_domains"]
     assert "Manipulation / Dexterous Hands" in record["research_domains"]
     assert "Robotics latest (cs.RO)" not in record["research_domains"]
+    assert record["abstract"] == "A robot learning paper for safe manipulation and navigation."
     assert record["keywords"] == ["robot learning", "safe control"]
 
 
@@ -108,19 +109,18 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     )
 
     assert {item["slug"] for item in categories} == {
-        "robotics-latest-cs-ro",
-        "navigation",
+        "robotics-embodied-ai",
         "vision",
     }
 
-    robotics = ElementTree.parse(tmp_path / "categories" / "robotics-latest-cs-ro.xml")
+    robotics = ElementTree.parse(tmp_path / "categories" / "robotics-embodied-ai.xml")
     vision = ElementTree.parse(tmp_path / "categories" / "vision.xml")
     category_index = tmp_path / "categories" / "index.json"
     category_opml = tmp_path / "categories" / "opml.xml"
 
-    assert robotics.findtext("./channel/title") == "Oh My RSS - Robotics latest (cs.RO)"
+    assert robotics.findtext("./channel/title") == "Oh My RSS - Robotics / Embodied AI"
     assert robotics.findtext("./channel/item/title") == "Robot Paper"
-    assert [item.text for item in robotics.findall("./channel/item/category")] == ["Robotics latest (cs.RO)"]
+    assert [item.text for item in robotics.findall("./channel/item/category")] == ["Robotics / Embodied AI"]
     assert vision.findtext("./channel/item/title") == "Vision Paper"
     assert [item.text for item in vision.findall("./channel/item/category")] == ["Vision"]
     assert not (tmp_path / "categories" / "arxiv-robotics-latest-cs-ro.xml").exists()
@@ -137,18 +137,14 @@ def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     assert folder.attrib["text"] == "Oh My RSS 论文分类"
     assert "type" not in folder.attrib
     outlines = {outline.attrib["text"]: outline.attrib for outline in folder.findall("./outline")}
-    assert outlines["Robotics latest (cs.RO)"]["type"] == "rss"
+    assert outlines["Robotics / Embodied AI"]["type"] == "rss"
     assert (
-        outlines["Robotics latest (cs.RO)"]["xmlUrl"]
-        == "https://example.com/summaries/categories/robotics-latest-cs-ro.xml"
-    )
-    assert (
-        outlines["导航规划 / Navigation"]["xmlUrl"]
-        == "https://example.com/summaries/categories/navigation.xml"
+        outlines["Robotics / Embodied AI"]["xmlUrl"]
+        == "https://example.com/summaries/categories/robotics-embodied-ai.xml"
     )
 
 
-def test_publish_category_feeds_keeps_duplicate_category_aliases_in_sync(tmp_path):
+def test_publish_category_feeds_recomputes_stale_duplicate_category_aliases(tmp_path):
     records = [
         {
             "title": "Coarse robotics paper",
@@ -175,15 +171,13 @@ def test_publish_category_feeds_keeps_duplicate_category_aliases_in_sync(tmp_pat
 
     counts = {item["name"]: item["count"] for item in categories}
     assert counts["Robotics / Embodied AI"] == 2
-    assert counts["Robotics latest (cs.RO)"] == 2
+    assert "Robotics latest (cs.RO)" not in counts
 
     coarse = ElementTree.parse(tmp_path / "categories" / "robotics-embodied-ai.xml")
-    detailed = ElementTree.parse(tmp_path / "categories" / "robotics-latest-cs-ro.xml")
     coarse_titles = [item.text for item in coarse.findall("./channel/item/title")]
-    detailed_titles = [item.text for item in detailed.findall("./channel/item/title")]
 
     assert coarse_titles == ["Detailed robotics paper", "Coarse robotics paper"]
-    assert detailed_titles == coarse_titles
+    assert not (tmp_path / "categories" / "robotics-latest-cs-ro.xml").exists()
 
 
 def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
@@ -234,7 +228,7 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
 
     html = (tmp_path / "reports" / "monthly" / "2026-06.html").read_text(encoding="utf-8")
     assert "热门方向" in html
-    assert "Humanoid Robots" in html
+    assert "Humanoid / Legged Robots" in html
     assert "2026-06-trend-animated.svg" in html
 
     trend_svg = (

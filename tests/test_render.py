@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 
+from oh_my_rss.publisher import record_category_names
 from oh_my_rss.render import markdown_to_html, render_detail_html, render_index_html, render_rss_xml
 
 
@@ -73,6 +74,24 @@ def test_render_rss_xml_outputs_parseable_public_feed():
     assert channel.findtext("item/title") == "A & B <Robot>"
     assert channel.findtext("item/link") == "https://example.com/summaries/2606.11184v1.html"
     assert channel.findtext("item/category") == "Robotics"
+
+
+def test_record_category_names_recomputes_stale_research_domains():
+    record = {
+        "title": "Compact Object-Level Representations with Open-Vocabulary Understanding for Indoor Visual Relocalization",
+        "summary_excerpt": (
+            "The method builds object-level scene representations for indoor visual "
+            "relocalization and pose estimation from open-vocabulary perception."
+        ),
+        "research_domains": ["VLA / Multimodal Agents"],
+        "feed_names": ["arXiv VLA / Vision-Language-Action"],
+    }
+
+    categories = record_category_names(record)
+
+    assert "SLAM / Mapping / Localization" in categories
+    assert "3D Vision / Perception" in categories
+    assert "VLA / Multimodal Agents" not in categories
 
 
 def test_render_index_html_exposes_rss_and_opml_discovery_links():

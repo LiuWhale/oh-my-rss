@@ -398,14 +398,6 @@ def record_month(record: dict[str, object]) -> str:
 
 
 def record_directions(record: dict[str, object]) -> list[str]:
-    raw = record.get("research_domains") or record.get("feed_names") or []
-    if record.get("research_domains"):
-        if isinstance(raw, str):
-            values = [raw]
-        else:
-            values = list(raw) if isinstance(raw, list | tuple | set) else []
-        directions = unique_strings(normalize_direction(item) for item in values)
-        return directions or ["Uncategorized"]
     return classify_record_domains(record)
 
 

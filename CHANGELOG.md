@@ -7,6 +7,19 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-06-24
+
+### Fixed
+
+- Recompute paper categories from title, abstract, keywords, and generated
+  summary excerpts instead of trusting stale `research_domains` from earlier
+  discovery runs.
+- Keep arXiv discovery feeds out of published category feeds so source labels
+  such as `arXiv Robotics latest (cs.RO)` do not masquerade as final research
+  fields.
+- Persist abstracts on generated summary records so later feed rebuilds can
+  classify papers without falling back to old feed labels.
+
 ## [0.1.13] - 2026-06-24
 
 ### Fixed
