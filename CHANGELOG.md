@@ -17,6 +17,8 @@ Keep a Changelog. Version tags use semantic versioning.
 - Require explicit domain evidence for paper categories instead of deriving
   fields from source feed labels or generic words such as `policy`,
   `navigation`, `manipulation`, `control`, or `learning`.
+- Write stale-running recovery timestamps with a deterministic timezone instead
+  of depending on the host machine's local timezone.
 
 ## [0.1.14] - 2026-06-24
 

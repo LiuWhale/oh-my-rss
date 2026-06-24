@@ -40,28 +40,40 @@ def expire_stale_running_records(
     for record in records.values():
         if not isinstance(record, dict) or record.get("status") != "running":
             continue
-        updated_at = parse_state_datetime(record.get("updated_at") or record.get("generated_at"))
+        original_updated_at = parse_state_datetime_preserving_timezone(
+            record.get("updated_at") or record.get("generated_at")
+        )
+        updated_at = normalize_datetime(original_updated_at) if original_updated_at else None
         if updated_at is not None and now_value - updated_at <= max_age:
             continue
+        output_timezone = original_updated_at.tzinfo if original_updated_at else timezone.utc
+        recovered_at = now_value.astimezone(output_timezone).isoformat(timespec="seconds")
         record["status"] = "error"
         record["error"] = (
             f"stale running record older than {format_timedelta(max_age)}; "
             "will retry if the paper appears in a future candidate set"
         )
-        record["stale_running_recovered_at"] = now_value.astimezone().isoformat(timespec="seconds")
-        record["updated_at"] = now_value.astimezone().isoformat(timespec="seconds")
+        record["stale_running_recovered_at"] = recovered_at
+        record["updated_at"] = recovered_at
         expired += 1
     return expired
 
 
 def parse_state_datetime(value: object) -> datetime | None:
+    parsed = parse_state_datetime_preserving_timezone(value)
+    return normalize_datetime(parsed) if parsed else None
+
+
+def parse_state_datetime_preserving_timezone(value: object) -> datetime | None:
     if not isinstance(value, str) or not value:
         return None
     try:
         parsed = datetime.fromisoformat(value)
     except ValueError:
         return None
-    return normalize_datetime(parsed)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 def normalize_datetime(value: datetime) -> datetime:

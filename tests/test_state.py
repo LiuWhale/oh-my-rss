@@ -45,3 +45,4 @@ def test_expire_stale_running_records_recovers_missing_timestamps():
 
     assert expired == 1
     assert state["papers"]["unknown"]["status"] == "error"
+    assert state["papers"]["unknown"]["updated_at"] == "2026-06-23T07:00:00+00:00"
