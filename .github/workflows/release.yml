@@ -36,8 +36,8 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
-      - run: ruff check .
-      - run: pytest -q
+      - run: python -m ruff check .
+      - run: python -m pytest -q
       - run: python -m build
 
       - name: Extract release notes
@@ -105,9 +105,9 @@ jobs:
       - if: steps.release.outputs.exists == 'false'
         run: python -m pip install -e ".[dev]"
       - if: steps.release.outputs.exists == 'false'
-        run: ruff check .
+        run: python -m ruff check .
       - if: steps.release.outputs.exists == 'false'
-        run: pytest -q
+        run: python -m pytest -q
       - if: steps.release.outputs.exists == 'false'
         run: python -m build
 
