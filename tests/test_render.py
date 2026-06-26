@@ -76,6 +76,65 @@ def test_render_rss_xml_outputs_parseable_public_feed():
     assert channel.findtext("item/category") == "Robotics"
 
 
+def test_render_rss_xml_orders_and_dates_items_by_source_published_time():
+    xml = render_rss_xml(
+        [
+            {
+                "title": "Older source but later summary",
+                "arxiv_id": "2606.22027v2",
+                "url": "https://example.com/summaries/old.html",
+                "source_published_at": "2026-06-24T05:16:35+00:00",
+                "generated_at": "2026-06-25T12:42:56+08:00",
+            },
+            {
+                "title": "Newer arXiv paper",
+                "arxiv_id": "2606.26095v1",
+                "url": "https://example.com/summaries/new.html",
+                "source_published_at": "2026-06-24T17:59:56+00:00",
+                "generated_at": "2026-06-25T11:02:42+08:00",
+            },
+        ],
+        generated_at="2026-06-26T00:52:16+08:00",
+        public_base_url="https://example.com/summaries",
+    )
+
+    root = ElementTree.fromstring(xml)
+    items = root.findall("./channel/item")
+
+    assert [item.findtext("title") for item in items] == [
+        "Newer arXiv paper",
+        "Older source but later summary",
+    ]
+    assert items[0].findtext("pubDate") == "Wed, 24 Jun 2026 17:59:56 GMT"
+
+
+def test_render_rss_xml_does_not_let_generated_only_records_hide_source_dated_papers():
+    xml = render_rss_xml(
+        [
+            {
+                "title": "Generated-only venue paper",
+                "arxiv_id": "ieee-11268969",
+                "url": "https://example.com/summaries/venue.html",
+                "generated_at": "2026-06-26T04:47:35+08:00",
+            },
+            {
+                "title": "New arXiv paper",
+                "arxiv_id": "2606.26095v1",
+                "url": "https://example.com/summaries/arxiv.html",
+                "source_published_at": "2026-06-24T17:59:56+00:00",
+                "generated_at": "2026-06-25T11:02:42+08:00",
+            },
+        ],
+        generated_at="2026-06-26T09:20:00+08:00",
+        public_base_url="https://example.com/summaries",
+    )
+
+    root = ElementTree.fromstring(xml)
+    items = root.findall("./channel/item")
+
+    assert items[0].findtext("title") == "New arXiv paper"
+
+
 def test_record_category_names_recomputes_stale_research_domains():
     record = {
         "title": "Compact Object-Level Representations with Open-Vocabulary Understanding for Indoor Visual Relocalization",

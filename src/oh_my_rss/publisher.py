@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime, timezone
 from pathlib import Path
 import hashlib
 import html
@@ -23,7 +24,7 @@ from .reports import (
     render_trending_topics_index_html,
     render_trending_topic_json,
 )
-from .render import render_detail_html, render_index_html, render_rss_xml
+from .render import record_sort_key, render_detail_html, render_index_html, render_rss_xml
 
 
 CATEGORY_ALIAS_GROUPS: tuple[tuple[str, ...], ...] = (
@@ -39,6 +40,12 @@ CATEGORY_ALIAS_GROUPS: tuple[tuple[str, ...], ...] = (
 def detail_filename(arxiv_id: str, summary_sha256: str) -> str:
     safe = arxiv_id.replace("/", "_")
     return f"{safe}-{summary_sha256[:12]}.html"
+
+
+def paper_source_published_at(paper: Paper) -> str:
+    if not paper.date:
+        return ""
+    return datetime.fromtimestamp(paper.date, timezone.utc).isoformat()
 
 
 def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_url: str, generated_at: str) -> dict[str, object]:
@@ -71,6 +78,7 @@ def publish_detail(paper: Paper, markdown: str, output_dir: Path, public_base_ur
         "url": f"{public_base_url.rstrip('/')}/{name}",
         "detail_name": name,
         "generated_at": generated_at,
+        "source_published_at": paper_source_published_at(paper),
         "summary_sha256": sha,
         "feed_names": paper.feed_names,
         "keywords": paper.keywords,
@@ -93,7 +101,7 @@ def publish_index(
     public_base_url: str = "",
 ) -> None:
     done = [record for record in records if record.get("url")]
-    done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
+    done.sort(key=record_sort_key, reverse=True)
     html = render_index_html(done, generated_at, public_base_url=public_base_url)
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "index.html").write_text(html, encoding="utf-8")
@@ -106,7 +114,7 @@ def publish_feed(
     generated_at: str,
 ) -> None:
     done = [record for record in records if record.get("url")]
-    done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
+    done.sort(key=record_sort_key, reverse=True)
     xml = render_rss_xml(
         done,
         generated_at=generated_at,
@@ -145,7 +153,7 @@ def publish_category_feeds(
         if slug in used_slugs and used_slugs[slug] != category_name:
             slug = f"{slug}-{hashlib.sha256(category_name.encode('utf-8')).hexdigest()[:8]}"
         used_slugs[slug] = category_name
-        items = sorted(grouped[category_name], key=lambda item: str(item.get("generated_at", "")), reverse=True)
+        items = sorted(grouped[category_name], key=record_sort_key, reverse=True)
         feed_path = f"categories/{slug}.xml"
         xml = render_rss_xml(
             items,
@@ -231,7 +239,7 @@ def publish_status(
     output_dir.mkdir(parents=True, exist_ok=True)
     base_url = public_base_url.rstrip("/")
     done = [record for record in records if record.get("url")]
-    done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
+    done.sort(key=record_sort_key, reverse=True)
     latest_summary = None
     if done:
         latest = done[0]

@@ -297,7 +297,7 @@ def render_rss_xml(
     channel_link = channel_link or f"{base_url}/index.html"
     feed_url = f"{base_url}/{feed_path.lstrip('/')}"
     done = [record for record in records if record.get("url")]
-    done.sort(key=lambda item: str(item.get("generated_at", "")), reverse=True)
+    done.sort(key=record_sort_key, reverse=True)
 
     items = []
     for record in done[:200]:
@@ -305,7 +305,7 @@ def render_rss_xml(
         item_url = str(record["url"])
         paper_id = str(record.get("paper_id") or record.get("arxiv_id") or "")
         source_label = record_source_label(record)
-        generated = str(record.get("generated_at") or generated_at)
+        published = record_pubdate_value(record, generated_at)
         feeds = ", ".join(record.get("feed_names", []) or [])
         summary_excerpt = str(record.get("summary_excerpt") or "").strip()
         if summary_excerpt:
@@ -328,7 +328,7 @@ def render_rss_xml(
             f"      <link>{_xml(item_url)}</link>\n"
             f"      <guid isPermaLink=\"true\">{_xml(item_url)}</guid>\n"
             f"      <description>{_xml(item_description)}</description>\n"
-            f"      <pubDate>{_xml(_rss_date(generated))}</pubDate>\n"
+            f"      <pubDate>{_xml(_rss_date(published))}</pubDate>\n"
             f"{categories}\n"
             "    </item>"
         )
@@ -348,14 +348,63 @@ def render_rss_xml(
     )
 
 
-def _rss_date(value: str) -> str:
-    try:
-        parsed = datetime.fromisoformat(value)
-    except ValueError:
+SOURCE_TIME_KEYS = (
+    "source_published_at",
+    "source_updated_at",
+    "published_at",
+    "entry_published_at",
+    "entry_updated_at",
+)
+
+FALLBACK_TIME_KEYS = (
+    "generated_at",
+    "updated_at",
+)
+
+
+def record_sort_key(record: dict[str, object]) -> tuple[int, float]:
+    source_time = _parse_record_datetime(_first_record_value(record, SOURCE_TIME_KEYS))
+    if source_time is not None:
+        return (1, source_time.timestamp())
+
+    fallback_time = _parse_record_datetime(_first_record_value(record, FALLBACK_TIME_KEYS))
+    return (0, fallback_time.timestamp() if fallback_time else 0.0)
+
+
+def record_pubdate_value(record: dict[str, object], fallback: object = "") -> object:
+    for key in (*SOURCE_TIME_KEYS, *FALLBACK_TIME_KEYS):
+        value = record.get(key)
+        if value:
+            return value
+    return fallback
+
+
+def _first_record_value(record: dict[str, object], keys: tuple[str, ...]) -> object:
+    for key in keys:
+        value = record.get(key)
+        if value:
+            return value
+    return ""
+
+
+def _rss_date(value: object) -> str:
+    parsed = _parse_record_datetime(value)
+    if parsed is None:
         parsed = datetime.now(timezone.utc)
+    return format_datetime(parsed.astimezone(timezone.utc), usegmt=True)
+
+
+def _parse_record_datetime(value: object) -> datetime | None:
+    try:
+        if isinstance(value, int | float):
+            parsed = datetime.fromtimestamp(float(value), timezone.utc)
+        else:
+            parsed = datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
-    return format_datetime(parsed.astimezone(timezone.utc), usegmt=True)
+    return parsed
 
 
 def _xml(value: str) -> str:

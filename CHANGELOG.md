@@ -7,6 +7,8 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-06-26
+
 ### Added
 
 - Add a Simplified Chinese README and language links between the English and
@@ -14,6 +16,10 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ### Fixed
 
+- Sort public paper feeds by the original source publication time when available
+  and preserve FreshRSS entry timestamps as `source_published_at`, so newly
+  announced arXiv papers are not hidden behind later Codex summary generation
+  times.
 - Avoid classifying VLM/LLM-based 3D semantic scene-graph papers as VLA merely
   because they mention robotics applications; VLA now needs explicit action,
   policy, control, or manipulation evidence.

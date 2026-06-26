@@ -78,6 +78,26 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
     assert record["keywords"] == ["robot learning", "safe control"]
 
 
+def test_publish_detail_records_source_published_time_from_entry_date(tmp_path):
+    paper = Paper(
+        arxiv_id="2606.26095v1",
+        title="Learning Action Priors for Cross-embodiment Robot Manipulation",
+        abstract="A robot manipulation paper.",
+        date=1782352796,
+        feed_names=["arXiv Robotics latest (cs.RO)"],
+    )
+
+    record = publish_detail(
+        paper,
+        "# Summary\n\nRobot manipulation.",
+        output_dir=tmp_path,
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-25T11:02:42+08:00",
+    )
+
+    assert record["source_published_at"] == "2026-06-25T01:59:56+00:00"
+
+
 def test_publish_category_feeds_writes_one_feed_per_category(tmp_path):
     stale_categories = tmp_path / "categories"
     stale_categories.mkdir()
