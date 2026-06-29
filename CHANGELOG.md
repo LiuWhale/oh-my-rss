@@ -7,6 +7,14 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.17] - 2026-06-29
+
+### Fixed
+
+- Use the generated summary release time for RSS item `pubDate` while keeping
+  source publication timestamps for feed ordering, so RSS clients show when a
+  summary was actually pushed instead of the arXiv submission timestamp.
+
 ## [0.1.16] - 2026-06-26
 
 ### Added

@@ -76,7 +76,7 @@ def test_render_rss_xml_outputs_parseable_public_feed():
     assert channel.findtext("item/category") == "Robotics"
 
 
-def test_render_rss_xml_orders_and_dates_items_by_source_published_time():
+def test_render_rss_xml_orders_by_source_time_but_dates_items_by_release_time():
     xml = render_rss_xml(
         [
             {
@@ -105,7 +105,7 @@ def test_render_rss_xml_orders_and_dates_items_by_source_published_time():
         "Newer arXiv paper",
         "Older source but later summary",
     ]
-    assert items[0].findtext("pubDate") == "Wed, 24 Jun 2026 17:59:56 GMT"
+    assert items[0].findtext("pubDate") == "Thu, 25 Jun 2026 03:02:42 GMT"
 
 
 def test_render_rss_xml_does_not_let_generated_only_records_hide_source_dated_papers():

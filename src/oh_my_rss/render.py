@@ -372,11 +372,11 @@ def record_sort_key(record: dict[str, object]) -> tuple[int, float]:
 
 
 def record_pubdate_value(record: dict[str, object], fallback: object = "") -> object:
-    for key in (*SOURCE_TIME_KEYS, *FALLBACK_TIME_KEYS):
-        value = record.get(key)
-        if value:
-            return value
-    return fallback
+    release_time = _first_record_value(record, FALLBACK_TIME_KEYS)
+    if release_time:
+        return release_time
+    source_time = _first_record_value(record, SOURCE_TIME_KEYS)
+    return source_time or fallback
 
 
 def _first_record_value(record: dict[str, object], keys: tuple[str, ...]) -> object:
