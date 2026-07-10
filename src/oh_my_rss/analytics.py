@@ -14,6 +14,7 @@ class PaperReference:
     url: str
     generated_at: str
     source: str
+    published_at: str = ""
     directions: list[str] = field(default_factory=list)
     summary_excerpt: str = ""
 
@@ -28,6 +29,7 @@ class MonthlyReport:
     direction_growth: dict[str, int]
     direction_scores: dict[str, float]
     top_papers: list[PaperReference]
+    papers: list[PaperReference]
     trend_months: list[str]
     trend_counts: dict[str, list[int]]
 
@@ -141,6 +143,7 @@ def build_monthly_reports(
                 url=str(record["url"]),
                 generated_at=str(record.get("generated_at") or ""),
                 source=record_source(record),
+                published_at=str(record.get("source_published_at") or ""),
                 directions=record_directions(record),
                 summary_excerpt=str(record.get("summary_excerpt") or ""),
             )
@@ -172,6 +175,7 @@ def build_monthly_reports(
             name: [count_directions(papers_by_month.get(item, [])).get(name, 0) for item in trend_months]
             for name in trend_directions
         }
+        ordered_papers = sorted(papers, key=lambda item: item.generated_at, reverse=True)
         reports.append(
             MonthlyReport(
                 month=month,
@@ -181,7 +185,8 @@ def build_monthly_reports(
                 source_counts=dict(sorted(source_counts.items())),
                 direction_growth=dict(sorted(direction_growth.items())),
                 direction_scores=dict(sorted(direction_scores.items())),
-                top_papers=sorted(papers, key=lambda item: item.generated_at, reverse=True)[:20],
+                top_papers=ordered_papers[:20],
+                papers=ordered_papers,
                 trend_months=trend_months,
                 trend_counts=trend_counts,
             )
@@ -236,7 +241,7 @@ def build_trending_topics(
                 growth=direction_growth.get(name, 0),
                 score=direction_scores.get(name, float(direction_counts[name])),
                 source_counts=dict(sorted(count_sources(papers).items())),
-                papers=papers[:20],
+                papers=papers,
                 trend_months=trend_months,
                 trend_counts=[
                     count_directions(papers_by_month.get(item, [])).get(name, 0)
@@ -302,7 +307,7 @@ def build_keyword_trends(
                 growth=growth.get(name, 0),
                 score=scores[name],
                 source_counts=dict(sorted(count_sources(papers).items())),
-                papers=papers[:20],
+                papers=papers,
                 trend_months=trend_months,
                 trend_counts=[
                     count_keywords(papers_by_month.get(item, [])).get(name, 0)
@@ -328,6 +333,7 @@ def group_keyword_papers_by_month(
             url=str(record["url"]),
             generated_at=str(record.get("generated_at") or ""),
             source=record_source(record),
+            published_at=str(record.get("source_published_at") or ""),
             directions=record_directions(record),
             summary_excerpt=str(record.get("summary_excerpt") or ""),
         )
@@ -379,6 +385,7 @@ def group_paper_references_by_month(
                 url=str(record["url"]),
                 generated_at=str(record.get("generated_at") or ""),
                 source=record_source(record),
+                published_at=str(record.get("source_published_at") or ""),
                 directions=record_directions(record),
                 summary_excerpt=str(record.get("summary_excerpt") or ""),
             )

@@ -125,11 +125,11 @@ oh-my-rss validate-opml --opml starter-paper-feeds.opml
 - `categories/index.json`：机器可读的分类 feed 列表
 - `categories/opml.xml`：只包含分类 feed 的 OPML，适合 RSS 客户端导入
 - `reports/monthly.xml`：月度研究趋势报告 RSS
-- `reports/monthly/YYYY-MM.html`：月度报告页面，包含方向柱状图、来源分布、动态图表和代表论文
+- `reports/monthly/YYYY-MM.html`：月度报告页面，包含方向柱状图、来源分布、动态图表和当月全部论文的可筛选列表
 - `reports/trending.xml`：热点研究方向 RSS
-- `reports/trending/*.html`：方向页面，包含趋势数量、来源和代表论文
+- `reports/trending/index.html`：统一的热点方向页面，可在同页筛选方向并进入中文总结
 - `reports/keywords.xml`：热点关键词 RSS
-- `reports/keywords/*.html`：关键词页面，包含趋势数量、来源和代表论文
+- `reports/keywords/index.html`：统一的关键词趋势页面，可在同页筛选关键词并进入中文总结
 - `reports/source-health.xml`：源健康检查 RSS
 - `reports/source-health/index.html`：源健康雷达页面，展示每个源的数量和告警
 - `reports/source-health/index.json`：机器可读的源健康报告
@@ -188,7 +188,7 @@ JSON 只适合需要机器可读列表的集成：
 <site.public_base_url>/reports/monthly.xml
 ```
 
-每个月度报告页面都包含动态图表、方向柱状图、来源分布图、摘要表，以及指向底层 Codex 论文总结的链接。
+每个月度报告页面都包含动态图表、方向柱状图、来源分布图，以及当月全部论文的静态可筛选列表。检索、来源和领域筛选会同步写入页面 URL，并保留底层 Codex 论文总结链接。
 
 热点研究方向也会发布为独立 feed：
 
@@ -196,7 +196,7 @@ JSON 只适合需要机器可读列表的集成：
 <site.public_base_url>/reports/trending.xml
 ```
 
-每个热点方向 item 会链接到一个方向页面，页面包含来源数量、近期趋势数量、代表论文，以及对应的论文总结链接。
+每个热点方向 item 仍链接到同一个方向页面中的对应锚点。页面会预选该方向，并提供来源筛选、文本检索、全部匹配论文和对应的中文总结链接。
 
 具体关键词趋势发布为另一个 RSS：
 
@@ -204,7 +204,7 @@ JSON 只适合需要机器可读列表的集成：
 <site.public_base_url>/reports/keywords.xml
 ```
 
-每个关键词 item 会链接到一个页面，用来追踪 VLA、diffusion policy、humanoid、SLAM、safety filter、sim-to-real 等术语在近期论文总结中的变化。
+每个关键词 item 仍链接到同一个关键词页面中的对应锚点。页面会预选该关键词，并提供来源筛选、文本检索、全部匹配论文和对应的中文总结链接。
 
 源健康检查发布为运维雷达 feed：
 

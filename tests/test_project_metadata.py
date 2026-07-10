@@ -58,6 +58,7 @@ def test_source_distribution_manifest_includes_cover_assets():
     assert "graft assets" in manifest
     assert "README.zh-CN.md" in manifest
     assert "scripts/make-github-cover.py" in manifest
+    assert "scripts/nas_report_workspace.py" in manifest
 
 
 def test_runtime_version_matches_package_metadata():

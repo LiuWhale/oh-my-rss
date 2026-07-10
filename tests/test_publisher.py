@@ -59,6 +59,7 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
         title="Safe Diffusion Policy for Mobile Manipulation",
         abstract="A robot learning paper for safe manipulation and navigation.",
         feed_names=["arXiv Robotics latest (cs.RO)"],
+        feed_urls=["https://export.arxiv.org/rss/cs.RO"],
         keywords=["robot learning", "safe control"],
     )
 
@@ -76,6 +77,7 @@ def test_publish_detail_records_research_domains_for_category_and_monthly_report
     assert "Robotics latest (cs.RO)" not in record["research_domains"]
     assert record["abstract"] == "A robot learning paper for safe manipulation and navigation."
     assert record["keywords"] == ["robot learning", "safe control"]
+    assert record["feed_urls"] == ["https://export.arxiv.org/rss/cs.RO"]
 
 
 def test_publish_detail_records_source_published_time_from_entry_date(tmp_path):
@@ -250,6 +252,10 @@ def test_publish_monthly_reports_writes_html_assets_json_and_feed(tmp_path):
     assert "热门方向" in html
     assert "Humanoid / Legged Robots" in html
     assert "2026-06-trend-animated.svg" in html
+    assert 'data-report-workspace="monthly"' in html
+    assert 'data-report-query="q"' in html
+    assert 'data-report-domain="Humanoid / Legged Robots"' in html
+    assert 'data-report-paper-url="https://example.com/summaries/humanoid.html"' in html
 
     trend_svg = (
         tmp_path / "reports" / "monthly" / "assets" / "2026-06-trend-animated.svg"
@@ -325,6 +331,10 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
     assert "Manipulation paper" in html
     assert "Humanoid paper" in html
     assert "趋势月份" in html
+    assert 'data-report-workspace="trending"' in html
+    assert 'data-legacy-fragment="topic-manipulation-dexterous-hands"' in html
+    assert 'data-report-domain="Manipulation / Dexterous Hands"' in html
+    assert 'data-report-paper-url="https://example.com/summaries/manipulation.html"' in html
 
 
 def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
@@ -381,6 +391,10 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
     assert "关键词趋势" in html
     assert 'id="keyword-vla"' in html
     assert "Humanoid VLA" in html
+    assert 'data-report-workspace="keywords"' in html
+    assert 'data-legacy-fragment="keyword-vla"' in html
+    assert 'data-report-keyword="VLA"' in html
+    assert 'data-report-paper-url="https://example.com/summaries/vla.html"' in html
     assert "趋势月份" in html
 
 

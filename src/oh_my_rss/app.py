@@ -272,6 +272,7 @@ def run_once(
                 "keywords": paper.keywords,
                 "entry_ids": normalize_entry_ids(paper.entry_ids),
                 "feed_names": paper.feed_names,
+                "feed_urls": paper.feed_urls,
                 "hero_image_url": paper.hero_image_url,
                 "hero_image_error": paper.hero_image_error,
                 "status": "running",

@@ -7,6 +7,19 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.18] - 2026-07-10
+
+### Changed
+
+- Upgrade the existing monthly, hot-direction, and hot-keyword report pages
+  into filterable static workspaces. The original RSS URLs and RSS item deep
+  links remain unchanged, while each page now exposes all matching papers,
+  source and domain filters, text search, pagination, and direct links to the
+  generated Chinese summaries.
+- Keep old `#topic-...` and `#keyword-...` report links compatible by turning
+  them into same-page filters instead of generating a separate page per topic
+  or keyword.
+
 ## [0.1.17] - 2026-06-29
 
 ### Fixed

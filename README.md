@@ -151,13 +151,14 @@ Each run writes:
 - `categories/opml.xml`: category-only OPML import file for RSS clients
 - `reports/monthly.xml`: monthly research trend report RSS feed
 - `reports/monthly/YYYY-MM.html`: monthly report pages with direction bars,
-  source distribution, animated trend charts, and representative papers
+  source distribution, animated trend charts, and a filterable list of every
+  paper in that month
 - `reports/trending.xml`: hot research-direction RSS feed
-- `reports/trending/*.html`: direction pages with trend counts, sources, and
-  representative papers
+- `reports/trending/index.html`: one shared hot-direction page with
+  same-page direction filters and direct Chinese-summary links
 - `reports/keywords.xml`: hot research-keyword RSS feed
-- `reports/keywords/*.html`: keyword pages with trend counts, sources, and
-  representative papers
+- `reports/keywords/index.html`: one shared keyword-trend page with same-page
+  keyword filters and direct Chinese-summary links
 - `reports/source-health.xml`: source health RSS feed
 - `reports/source-health/index.html`: source health radar page with per-source
   counts and warnings
@@ -225,8 +226,9 @@ Monthly trend reports are published as a separate RSS feed:
 ```
 
 Each monthly report page includes an animated SVG trend chart, direction bar
-chart, source distribution chart, summary tables, and links back to the
-underlying Codex paper summaries.
+chart, source distribution chart, and a static filterable paper list. Search,
+source, and domain filters update the page URL and link back to the underlying
+Codex paper summaries.
 
 Hot research directions are also published as their own feed:
 
@@ -234,9 +236,9 @@ Hot research directions are also published as their own feed:
 <site.public_base_url>/reports/trending.xml
 ```
 
-Each trending-topic item links to a direction page with source counts, recent
-trend counts, representative papers, and links back to the generated paper
-summaries.
+Each trending-topic item keeps its existing deep link into one shared direction
+page. The matching direction is preselected there, alongside source filters,
+text search, all matching papers, and links back to their generated summaries.
 
 Specific research keywords are published as another RSS feed:
 
@@ -244,9 +246,9 @@ Specific research keywords are published as another RSS feed:
 <site.public_base_url>/reports/keywords.xml
 ```
 
-Each keyword item links to a page that tracks term-level trends such as VLA,
-diffusion policy, humanoid, SLAM, safety filter, and sim-to-real across recent
-paper summaries.
+Each keyword item keeps its existing deep link into one shared keyword page.
+The matching term is preselected there, alongside source filters, text search,
+all matching papers, and links back to their generated summaries.
 
 Source health checks are published as an operational radar feed:
 

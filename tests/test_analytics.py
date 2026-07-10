@@ -63,6 +63,27 @@ def test_build_monthly_reports_infers_domains_when_record_has_no_research_domain
     assert "Robotics latest (cs.RO)" not in domains
 
 
+def test_build_monthly_reports_keeps_all_current_month_papers_for_interactive_view():
+    reports = build_monthly_reports(
+        [
+            {
+                "title": f"June paper {index}",
+                "url": f"https://example.com/summaries/june-{index}.html",
+                "generated_at": f"2026-06-{index:02d}T10:00:00+08:00",
+                "research_domains": ["Manipulation / Dexterous Hands"],
+                "venue": "RSS",
+                "summary_excerpt": "A manipulation paper.",
+            }
+            for index in range(1, 23)
+        ],
+        generated_at="2026-06-23T10:00:00+08:00",
+    )
+
+    assert len(reports[0].top_papers) == 20
+    assert len(reports[0].papers) == 22
+    assert reports[0].papers[0].title == "June paper 22"
+
+
 def test_build_trending_topics_ranks_hot_directions_with_representative_papers():
     records = [
         {
@@ -106,6 +127,25 @@ def test_build_trending_topics_ranks_hot_directions_with_representative_papers()
     assert topics[0].trend_counts == [1, 2]
 
 
+def test_build_trending_topics_keeps_all_matching_papers_for_interactive_view():
+    records = [
+        {
+            "title": f"Manipulation paper {index}",
+            "url": f"https://example.com/summaries/manipulation-{index}.html",
+            "generated_at": f"2026-06-{index:02d}T10:00:00+08:00",
+            "research_domains": ["Manipulation / Dexterous Hands"],
+            "venue": "RSS",
+            "summary_excerpt": "A manipulation paper.",
+        }
+        for index in range(1, 23)
+    ]
+
+    topics = build_trending_topics(records, generated_at="2026-06-23T10:00:00+08:00")
+
+    assert topics[0].paper_count == 22
+    assert len(topics[0].papers) == 22
+
+
 def test_build_keyword_trends_extracts_specific_research_terms_and_growth():
     records = [
         {
@@ -147,3 +187,22 @@ def test_build_keyword_trends_extracts_specific_research_terms_and_growth():
     ]
     assert trends[0].trend_months == ["2026-05", "2026-06"]
     assert trends[0].trend_counts == [0, 2]
+
+
+def test_build_keyword_trends_keeps_all_matching_papers_for_interactive_view():
+    records = [
+        {
+            "title": f"VLA paper {index}",
+            "url": f"https://example.com/summaries/vla-{index}.html",
+            "generated_at": f"2026-06-{index:02d}T10:00:00+08:00",
+            "research_domains": ["Vision-Language-Action"],
+            "venue": "RSS",
+            "summary_excerpt": "A vision-language-action paper.",
+        }
+        for index in range(1, 23)
+    ]
+
+    trends = build_keyword_trends(records, generated_at="2026-06-23T10:00:00+08:00")
+
+    assert trends[0].paper_count == 22
+    assert len(trends[0].papers) == 22

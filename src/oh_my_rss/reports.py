@@ -5,7 +5,7 @@ import html
 import json
 import math
 
-from .analytics import KeywordTrend, MonthlyReport, TrendingTopic
+from .analytics import KeywordTrend, MonthlyReport, PaperReference, TrendingTopic
 from .render import page_css
 
 
@@ -35,11 +35,242 @@ def render_keyword_trend_json(keyword: KeywordTrend) -> str:
     return json.dumps(asdict(keyword), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
+def render_report_workspace(
+    *,
+    mode: str,
+    papers: list[PaperReference],
+    domain_choices: list[tuple[str, int]] | None = None,
+    keyword_choices: list[tuple[str, int]] | None = None,
+    keyword_memberships: dict[str, list[str]] | None = None,
+    overview: str = "",
+) -> str:
+    domain_choices = domain_choices or []
+    keyword_choices = keyword_choices or []
+    keyword_memberships = keyword_memberships or {}
+    source_choices = sorted({paper.source for paper in papers})
+
+    source_options = "".join(
+        f'<option value="{_attr(source)}">{_text(source)}</option>' for source in source_choices
+    )
+    domain_filter = ""
+    if domain_choices:
+        domain_options = "".join(
+            f'<option value="{_attr(name)}">{_text(name)} ({count})</option>'
+            for name, count in domain_choices
+        )
+        domain_filter = f"""
+      <label>领域
+        <select data-report-filter="domain">
+          <option value="">全部领域</option>
+          {domain_options}
+        </select>
+      </label>"""
+    keyword_filter = ""
+    if keyword_choices:
+        keyword_options = "".join(
+            f'<option value="{_attr(name)}">{_text(name)} ({count})</option>'
+            for name, count in keyword_choices
+        )
+        keyword_filter = f"""
+      <label>关键词
+        <select data-report-filter="keyword">
+          <option value="">全部关键词</option>
+          {keyword_options}
+        </select>
+      </label>"""
+
+    paper_cards = render_report_paper_cards(papers, keyword_memberships)
+    overview_html = f'<div class="report-group-grid">{overview}</div>' if overview else ""
+    return f"""
+    <section class="report-workspace" data-report-workspace="{_attr(mode)}">
+      {overview_html}
+      <div class="report-toolbar" aria-label="论文筛选">
+        <label class="report-search">检索
+          <input type="search" data-report-query="q" placeholder="标题、总结、来源或领域">
+        </label>
+        <label>来源
+          <select data-report-filter="source">
+            <option value="">全部来源</option>
+            {source_options}
+          </select>
+        </label>
+        {domain_filter}
+        {keyword_filter}
+        <button type="button" class="report-clear" data-report-clear>清除筛选</button>
+      </div>
+      <div class="report-result-meta" data-report-result-meta></div>
+      <div class="report-paper-list" data-report-paper-list>
+        {paper_cards}
+      </div>
+      <div class="report-pager" data-report-pager>
+        <button type="button" data-report-page="previous" aria-label="上一页">上一页</button>
+        <span data-report-page-status></span>
+        <button type="button" data-report-page="next" aria-label="下一页">下一页</button>
+      </div>
+    </section>
+    {report_workspace_script()}
+"""
+
+
+def render_report_paper_cards(
+    papers: list[PaperReference],
+    keyword_memberships: dict[str, list[str]],
+) -> str:
+    if not papers:
+        return '<p class="report-empty">暂无可展示的论文。</p>'
+
+    cards: list[str] = []
+    for paper in papers:
+        keywords = keyword_memberships.get(paper.url, [])
+        search_text = " ".join(
+            [paper.title, paper.source, *paper.directions, *keywords, paper.summary_excerpt]
+        ).casefold()
+        domains = "||".join(paper.directions)
+        keyword_values = "||".join(keywords)
+        date = paper.published_at or paper.generated_at
+        metadata = [paper.source]
+        if date:
+            metadata.append(f"公开：{date}")
+        if paper.directions:
+            metadata.append("领域：" + " / ".join(paper.directions))
+        if keywords:
+            metadata.append("关键词：" + " / ".join(keywords))
+        cards.append(
+            f'<article class="report-paper" data-report-paper '
+            f'data-report-paper-url="{_attr(paper.url)}" '
+            f'data-report-paper-source="{_attr(paper.source)}" '
+            f'data-report-paper-domains="{_attr(domains)}" '
+            f'data-report-paper-keywords="{_attr(keyword_values)}" '
+            f'data-report-search="{_attr(search_text)}">'
+            f'<a class="report-paper-title" href="{_attr(paper.url)}">{_text(paper.title)}</a>'
+            f'<div class="report-paper-meta">{_text(" · ".join(metadata))}</div>'
+            f'<p>{_text(paper.summary_excerpt)}</p>'
+            "</article>"
+        )
+    return "\n".join(cards)
+
+
+def report_workspace_script() -> str:
+    return """
+<script>
+(() => {
+  const root = document.querySelector("[data-report-workspace]");
+  if (!root) return;
+  const query = root.querySelector("[data-report-query]");
+  const source = root.querySelector('[data-report-filter="source"]');
+  const domain = root.querySelector('[data-report-filter="domain"]');
+  const keyword = root.querySelector('[data-report-filter="keyword"]');
+  const papers = [...root.querySelectorAll("[data-report-paper]")];
+  const resultMeta = root.querySelector("[data-report-result-meta]");
+  const pageStatus = root.querySelector("[data-report-page-status]");
+  const pageSize = 30;
+  const params = new URLSearchParams(window.location.search);
+  const state = {
+    q: params.get("q") || "",
+    source: params.get("source") || "",
+    domain: params.get("domain") || "",
+    keyword: params.get("keyword") || "",
+    page: Math.max(1, Number.parseInt(params.get("page") || "1", 10) || 1),
+    legacyHash: window.location.hash.replace(/^#/, ""),
+  };
+
+  const setControl = (control, value) => {
+    if (control && [...control.options].some(option => option.value === value)) control.value = value;
+  };
+  const applyLegacyHash = () => {
+    if (!state.legacyHash) return;
+    const target = [...document.querySelectorAll("[data-legacy-fragment]")]
+      .find(element => element.dataset.legacyFragment === state.legacyHash);
+    if (!target) return;
+    if (target.dataset.reportDomain) state.domain = target.dataset.reportDomain;
+    if (target.dataset.reportKeyword) state.keyword = target.dataset.reportKeyword;
+  };
+  const values = (item, name) => (item.dataset[name] || "").split("||").filter(Boolean);
+  const matching = () => papers.filter(item => {
+    const text = item.dataset.reportSearch || "";
+    return (!state.q || text.includes(state.q.casefold()))
+      && (!state.source || item.dataset.reportPaperSource === state.source)
+      && (!state.domain || values(item, "reportPaperDomains").includes(state.domain))
+      && (!state.keyword || values(item, "reportPaperKeywords").includes(state.keyword));
+  });
+  const writeUrl = () => {
+    const url = new URL(window.location.href);
+    for (const key of ["q", "source", "domain", "keyword", "page"]) url.searchParams.delete(key);
+    for (const key of ["q", "source", "domain", "keyword"]) {
+      if (state[key]) url.searchParams.set(key, state[key]);
+    }
+    if (state.page > 1) url.searchParams.set("page", String(state.page));
+    url.hash = state.legacyHash ? `#${state.legacyHash}` : "";
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+  const render = () => {
+    setControl(source, state.source);
+    setControl(domain, state.domain);
+    setControl(keyword, state.keyword);
+    if (query) query.value = state.q;
+    const matches = matching();
+    const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+    state.page = Math.min(state.page, totalPages);
+    const start = (state.page - 1) * pageSize;
+    const visible = new Set(matches.slice(start, start + pageSize));
+    papers.forEach(item => { item.hidden = !visible.has(item); });
+    resultMeta.textContent = `显示 ${matches.length ? start + 1 : 0}-${Math.min(start + pageSize, matches.length)} / ${matches.length} 篇论文`;
+    pageStatus.textContent = `${state.page} / ${totalPages}`;
+    root.querySelector('[data-report-page="previous"]').disabled = state.page <= 1;
+    root.querySelector('[data-report-page="next"]').disabled = state.page >= totalPages;
+    document.querySelectorAll("[data-report-domain], [data-report-keyword], [data-report-source]")
+      .forEach(button => {
+        const active = (button.dataset.reportDomain && button.dataset.reportDomain === state.domain)
+          || (button.dataset.reportKeyword && button.dataset.reportKeyword === state.keyword)
+          || (button.dataset.reportSource && button.dataset.reportSource === state.source);
+        button.setAttribute("aria-pressed", String(active));
+      });
+    writeUrl();
+  };
+  const resetPage = () => { state.page = 1; };
+  if (query) query.addEventListener("input", event => { state.q = event.target.value.trim(); state.legacyHash = ""; resetPage(); render(); });
+  [[source, "source"], [domain, "domain"], [keyword, "keyword"]].forEach(([control, key]) => {
+    if (control) control.addEventListener("change", event => { state[key] = event.target.value; state.legacyHash = ""; resetPage(); render(); });
+  });
+  document.querySelectorAll("[data-report-domain], [data-report-keyword], [data-report-source]")
+    .forEach(button => button.addEventListener("click", () => {
+      if (button.dataset.reportDomain) state.domain = button.dataset.reportDomain;
+      if (button.dataset.reportKeyword) state.keyword = button.dataset.reportKeyword;
+      if (button.dataset.reportSource) state.source = button.dataset.reportSource;
+      state.legacyHash = button.dataset.legacyFragment || "";
+      resetPage();
+      render();
+      root.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  root.querySelector("[data-report-clear]").addEventListener("click", () => {
+    Object.assign(state, { q: "", source: "", domain: "", keyword: "", page: 1, legacyHash: "" });
+    render();
+  });
+  root.querySelectorAll("[data-report-page]").forEach(button => button.addEventListener("click", () => {
+    state.page += button.dataset.reportPage === "next" ? 1 : -1;
+    render();
+    root.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  applyLegacyHash();
+  render();
+})();
+</script>
+"""
+
+
+def unique_papers(papers: list[PaperReference]) -> list[PaperReference]:
+    by_url = {paper.url: paper for paper in papers}
+    return sorted(by_url.values(), key=lambda paper: paper.generated_at, reverse=True)
+
+
 def render_monthly_report_html(report: MonthlyReport) -> str:
     direction_rows = table_rows(
         [
             [
-                name,
+                (
+                    f'<button type="button" class="report-filter-button" '
+                    f'data-report-domain="{_attr(name)}">{_text(name)}</button>'
+                ),
                 str(count),
                 signed_number(report.direction_growth.get(name, 0)),
                 f"{report.direction_scores.get(name, float(count)):.1f}",
@@ -47,28 +278,25 @@ def render_monthly_report_html(report: MonthlyReport) -> str:
             for name, count in sorted_directions(report)
         ],
         empty_text="暂无方向统计。",
+        raw_html=True,
     )
     source_rows = table_rows(
-        [[name, str(count)] for name, count in sorted_counts(report.source_counts)],
-        empty_text="暂无来源统计。",
-    )
-    paper_rows = table_rows(
         [
             [
-                f'<a href="{_attr(paper.url)}" target="_blank" rel="noopener">{_text(paper.title)}</a>',
-                _text(paper.source),
-                _text(", ".join(paper.directions)),
-                _text(paper.summary_excerpt[:180]),
+                (
+                    f'<button type="button" class="report-filter-button" '
+                    f'data-report-source="{_attr(name)}">{_text(name)}</button>'
+                ),
+                str(count),
             ]
-            for paper in report.top_papers[:10]
+            for name, count in sorted_counts(report.source_counts)
         ],
-        empty_text="暂无代表论文。",
+        empty_text="暂无来源统计。",
         raw_html=True,
     )
     trend_chart = f"assets/{report.month}-trend-animated.svg"
     direction_chart = f"assets/{report.month}-direction-bars.svg"
     source_chart = f"assets/{report.month}-source-donut.svg"
-    json_href = f"{report.month}.json"
 
     return f"""<!doctype html>
 <html lang="zh-CN">
@@ -85,10 +313,6 @@ def render_monthly_report_html(report: MonthlyReport) -> str:
     <h1>{_text(report.title)}</h1>
     <div class="meta">生成时间：{_text(report.generated_at)} · 本月论文：{report.total_papers}</div>
     <p>{_text(report.summary)}</p>
-    <div class="links">
-      <a href="../monthly.xml">订阅月报 RSS</a>
-      <a href="{_attr(json_href)}">查看统计 JSON</a>
-    </div>
 
     <section class="report-grid">
       <figure>
@@ -117,11 +341,12 @@ def render_monthly_report_html(report: MonthlyReport) -> str:
       <tbody>{source_rows}</tbody>
     </table>
 
-    <h2>代表论文</h2>
-    <table>
-      <thead><tr><th>论文</th><th>来源</th><th>方向</th><th>摘要片段</th></tr></thead>
-      <tbody>{paper_rows}</tbody>
-    </table>
+    <h2>论文</h2>
+    {render_report_workspace(
+        mode="monthly",
+        papers=report.papers,
+        domain_choices=sorted_directions(report),
+    )}
   </article>
 </main>
 </body>
@@ -159,14 +384,19 @@ def render_trending_topic_html(topic: TrendingTopic, *, slug: str | None = None)
 def render_trending_topics_index_html(topics: list[tuple[TrendingTopic, str]]) -> str:
     month = topics[0][0].month if topics else ""
     generated_at = topics[0][0].generated_at if topics else ""
-    links = "\n".join(
-        f'      <li><a href="#topic-{_attr(slug)}">{_text(topic.name)}</a> '
-        f'<span class="muted">({topic.paper_count} 篇，热度 {topic.score:.1f})</span></li>'
+    topic_cards = "\n".join(
+        f'''<section id="topic-{_attr(slug)}" class="report-group-card"
+                    data-legacy-fragment="topic-{_attr(slug)}"
+                    data-report-domain="{_attr(topic.name)}">
+              <button type="button" data-report-domain="{_attr(topic.name)}"
+                      data-legacy-fragment="topic-{_attr(slug)}">{_text(topic.name)}</button>
+              <div class="report-group-meta">{topic.paper_count} 篇 · 环比 {signed_number(topic.growth)} · 热度 {topic.score:.1f}</div>
+              <div class="report-group-meta">趋势月份：{_text(' / '.join(topic.trend_months))}</div>
+            </section>'''
         for topic, slug in topics
     )
-    sections = "\n".join(render_trending_topic_section(topic, slug=slug) for topic, slug in topics)
-    if not sections:
-        sections = "<p>暂无热点方向。</p>"
+    papers = unique_papers([paper for topic, _ in topics for paper in topic.papers])
+    topic_choices = [(topic.name, topic.paper_count) for topic, _ in topics]
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -179,17 +409,15 @@ def render_trending_topics_index_html(topics: list[tuple[TrendingTopic, str]]) -
 <main>
   <p><a class="back" href="../../index.html">返回总结索引</a></p>
   <article>
-    <h1>热点研究方向</h1>
+    <h1>热点方向</h1>
     <div class="meta">月份：{_text(month)} · 生成时间：{_text(generated_at)}</div>
-    <p>这里汇总当前论文流里最热的研究方向。RSS 条目会直接链接到本页对应段落。</p>
-    <div class="links">
-      <a href="../trending.xml">订阅热点方向 RSS</a>
-      <a href="index.json">查看统计 JSON</a>
-    </div>
-    <ol class="toc">
-{links}
-    </ol>
-    {sections}
+    <p>按研究领域查看当前论文流中的热点与对应中文总结。</p>
+    {render_report_workspace(
+        mode="trending",
+        papers=papers,
+        domain_choices=topic_choices,
+        overview=topic_cards,
+    )}
   </article>
 </main>
 </body>
@@ -277,16 +505,23 @@ def render_keyword_trend_html(keyword: KeywordTrend, *, slug: str | None = None)
 def render_keyword_trends_index_html(keywords: list[tuple[KeywordTrend, str]]) -> str:
     month = keywords[0][0].month if keywords else ""
     generated_at = keywords[0][0].generated_at if keywords else ""
-    links = "\n".join(
-        f'      <li><a href="#keyword-{_attr(slug)}">{_text(keyword.keyword)}</a> '
-        f'<span class="muted">({keyword.paper_count} 篇，热度 {keyword.score:.1f})</span></li>'
+    keyword_cards = "\n".join(
+        f'''<section id="keyword-{_attr(slug)}" class="report-group-card"
+                    data-legacy-fragment="keyword-{_attr(slug)}"
+                    data-report-keyword="{_attr(keyword.keyword)}">
+              <button type="button" data-report-keyword="{_attr(keyword.keyword)}"
+                      data-legacy-fragment="keyword-{_attr(slug)}">{_text(keyword.keyword)}</button>
+              <div class="report-group-meta">{keyword.paper_count} 篇 · 环比 {signed_number(keyword.growth)} · 热度 {keyword.score:.1f}</div>
+              <div class="report-group-meta">趋势月份：{_text(' / '.join(keyword.trend_months))}</div>
+            </section>'''
         for keyword, slug in keywords
     )
-    sections = "\n".join(
-        render_keyword_trend_section(keyword, slug=slug) for keyword, slug in keywords
-    )
-    if not sections:
-        sections = "<p>暂无关键词趋势。</p>"
+    keyword_memberships: dict[str, list[str]] = {}
+    for keyword, _ in keywords:
+        for paper in keyword.papers:
+            keyword_memberships.setdefault(paper.url, []).append(keyword.keyword)
+    papers = unique_papers([paper for keyword, _ in keywords for paper in keyword.papers])
+    keyword_choices = [(keyword.keyword, keyword.paper_count) for keyword, _ in keywords]
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -299,17 +534,16 @@ def render_keyword_trends_index_html(keywords: list[tuple[KeywordTrend, str]]) -
 <main>
   <p><a class="back" href="../../index.html">返回总结索引</a></p>
   <article>
-    <h1>热点关键词</h1>
+    <h1>关键词趋势</h1>
     <div class="meta">月份：{_text(month)} · 生成时间：{_text(generated_at)}</div>
-    <p>这里汇总当前论文流里最热的研究关键词。RSS 条目会直接链接到本页对应段落。</p>
-    <div class="links">
-      <a href="../keywords.xml">订阅关键词趋势 RSS</a>
-      <a href="index.json">查看统计 JSON</a>
-    </div>
-    <ol class="toc">
-{links}
-    </ol>
-    {sections}
+    <p>按关键词查看近期研究脉络与对应中文总结。</p>
+    {render_report_workspace(
+        mode="keywords",
+        papers=papers,
+        keyword_choices=keyword_choices,
+        keyword_memberships=keyword_memberships,
+        overview=keyword_cards,
+    )}
   </article>
 </main>
 </body>
@@ -502,12 +736,35 @@ th { color: #374151; font-weight: 650; background: #f8fafc; }
 .toc { margin: 18px 0 28px; padding-left: 22px; }
 .toc li { margin: 7px 0; }
 .report-section { border-top: 1px solid #e5e7eb; padding-top: 22px; margin-top: 28px; }
+.report-workspace { border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 18px; }
+.report-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.report-toolbar label { display: grid; gap: 5px; color: #5d6673; font-size: 12px; font-weight: 650; }
+.report-toolbar input, .report-toolbar select { width: 100%; min-height: 36px; border: 1px solid #cfd7e1; border-radius: 5px; padding: 7px 9px; color: inherit; background: #fff; }
+.report-search { grid-column: span 2; }
+.report-clear, .report-filter-button, .report-group-card button, .report-pager button { min-height: 36px; border: 1px solid #cfd7e1; border-radius: 5px; padding: 7px 10px; color: #0f5fb8; background: #fbfcfd; font: inherit; cursor: pointer; }
+.report-filter-button, .report-group-card button { min-height: auto; padding: 0; border: 0; background: transparent; font-weight: 650; text-align: left; }
+.report-filter-button[aria-pressed="true"], .report-group-card button[aria-pressed="true"] { color: #063f80; text-decoration: underline; }
+.report-result-meta { margin: 16px 0 8px; color: #5d6673; font-size: 13px; }
+.report-paper-list { display: grid; border-top: 1px solid #e5e7eb; }
+.report-paper { padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
+.report-paper-title { display: inline-block; font-weight: 700; text-decoration: none; }
+.report-paper-meta, .report-group-meta { margin-top: 4px; color: #687281; font-size: 13px; }
+.report-paper p { margin: 7px 0 0; color: #46505d; font-size: 14px; }
+.report-pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 14px; color: #5d6673; font-size: 13px; }
+.report-pager button:disabled { cursor: default; opacity: 0.45; }
+.report-group-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.report-group-card { border: 1px solid #d7dde4; border-radius: 6px; padding: 11px; background: #fbfcfd; scroll-margin-top: 80px; }
+.report-empty { color: #687281; }
 @media (min-width: 900px) { .report-grid { grid-template-columns: 1fr 1fr; } .report-grid figure:first-child { grid-column: 1 / -1; } }
+@media (max-width: 720px) { .report-toolbar { grid-template-columns: 1fr 1fr; } .report-search { grid-column: 1 / -1; } .report-group-grid { grid-template-columns: 1fr; } }
 @media (prefers-color-scheme: dark) {
   .report-grid img { border-color: #344050; }
   th, td { border-color: #28313c; }
   th { background: #1d2530; color: #d7dee8; }
   .report-section { border-color: #28313c; }
+  .report-workspace, .report-paper-list, .report-paper { border-color: #28313c; }
+  .report-toolbar input, .report-toolbar select, .report-clear, .report-pager button, .report-group-card { color: #e7edf5; background: #1d2530; border-color: #374151; }
+  .report-paper p { color: #c6d0db; }
 }
 """
 
