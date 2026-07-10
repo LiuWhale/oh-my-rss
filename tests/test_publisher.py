@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from xml.etree import ElementTree
 
 from oh_my_rss.analytics import build_keyword_trends, build_monthly_reports, build_trending_topics
@@ -306,10 +307,10 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
         generated_at="2026-06-12T09:00:00+08:00",
     )
 
-    assert published[0]["url"] == (
-        "https://example.com/summaries/reports/trending/index.html"
-        "#topic-manipulation-dexterous-hands"
+    assert published[0]["url"].startswith(
+        "https://example.com/summaries/reports/trending/index.html?v="
     )
+    assert published[0]["url"].endswith("#topic-manipulation-dexterous-hands")
     assert (tmp_path / "reports" / "trending.xml").exists()
     assert (tmp_path / "reports" / "trending" / "index.json").exists()
     assert (tmp_path / "reports" / "trending" / "index.html").exists()
@@ -320,10 +321,27 @@ def test_publish_trending_topics_writes_topic_pages_json_and_feed(tmp_path):
     assert root.findtext("channel/title") == "Oh My RSS Trending Research Topics"
     assert root.findtext("channel/link") == "https://example.com/summaries/reports/trending/index.html"
     assert root.findtext("channel/item/title") == "Manipulation / Dexterous Hands - 2026-06 热点方向"
-    assert (
-        '<a href="https://example.com/summaries/reports/trending/index.html#topic-manipulation-dexterous-hands">查看网页</a>'
-        in (root.findtext("channel/item/description") or "")
+    assert root.findtext("channel/item/link") == published[0]["url"]
+    assert root.findtext("channel/item/guid") == published[0]["url"]
+    assert f'<a href="{published[0]["url"]}">查看网页</a>' in (
+        root.findtext("channel/item/description") or ""
     )
+
+    rebuilt = publish_trending_topics(
+        [replace(topics[0], generated_at="2026-06-13T09:00:00+08:00")],
+        output_dir=tmp_path / "rebuilt",
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-13T09:00:00+08:00",
+    )
+    assert rebuilt[0]["url"] == published[0]["url"]
+
+    changed = publish_trending_topics(
+        [replace(topics[0], paper_count=topics[0].paper_count + 1)],
+        output_dir=tmp_path / "changed",
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-13T09:00:00+08:00",
+    )
+    assert changed[0]["url"] != published[0]["url"]
 
     html = (tmp_path / "reports" / "trending" / "index.html").read_text(encoding="utf-8")
     assert "热点方向" in html
@@ -371,7 +389,10 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
         generated_at="2026-06-12T09:00:00+08:00",
     )
 
-    assert published[0]["url"] == "https://example.com/summaries/reports/keywords/index.html#keyword-vla"
+    assert published[0]["url"].startswith(
+        "https://example.com/summaries/reports/keywords/index.html?v="
+    )
+    assert published[0]["url"].endswith("#keyword-vla")
     assert (tmp_path / "reports" / "keywords.xml").exists()
     assert (tmp_path / "reports" / "keywords" / "index.json").exists()
     assert (tmp_path / "reports" / "keywords" / "index.html").exists()
@@ -382,10 +403,27 @@ def test_publish_keyword_trends_writes_keyword_pages_json_and_feed(tmp_path):
     assert root.findtext("channel/title") == "Oh My RSS Trending Research Keywords"
     assert root.findtext("channel/link") == "https://example.com/summaries/reports/keywords/index.html"
     assert root.findtext("channel/item/title") == "VLA - 2026-06 关键词趋势"
-    assert (
-        '<a href="https://example.com/summaries/reports/keywords/index.html#keyword-vla">查看网页</a>'
-        in (root.findtext("channel/item/description") or "")
+    assert root.findtext("channel/item/link") == published[0]["url"]
+    assert root.findtext("channel/item/guid") == published[0]["url"]
+    assert f'<a href="{published[0]["url"]}">查看网页</a>' in (
+        root.findtext("channel/item/description") or ""
     )
+
+    rebuilt = publish_keyword_trends(
+        [replace(trends[0], generated_at="2026-06-13T09:00:00+08:00")],
+        output_dir=tmp_path / "rebuilt",
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-13T09:00:00+08:00",
+    )
+    assert rebuilt[0]["url"] == published[0]["url"]
+
+    changed = publish_keyword_trends(
+        [replace(trends[0], paper_count=trends[0].paper_count + 1)],
+        output_dir=tmp_path / "changed",
+        public_base_url="https://example.com/summaries",
+        generated_at="2026-06-13T09:00:00+08:00",
+    )
+    assert changed[0]["url"] != published[0]["url"]
 
     html = (tmp_path / "reports" / "keywords" / "index.html").read_text(encoding="utf-8")
     assert "关键词趋势" in html

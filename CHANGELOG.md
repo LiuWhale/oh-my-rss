@@ -7,6 +7,17 @@ Keep a Changelog. Version tags use semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-07-10
+
+### Fixed
+
+- Version hot-direction and hot-keyword RSS item links from their statistical
+  content rather than their report build time. Reeder now sees a new item when
+  a topic or keyword report actually changes, while unchanged daily rebuilds
+  keep the same GUID and do not create notification noise.
+- Use the same versioned item URL for the report page link, bypassing stale
+  gateway and client caches without changing any subscription URL.
+
 ## [0.1.18] - 2026-07-10
 
 ### Changed

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 import hashlib
@@ -387,7 +388,12 @@ def publish_trending_topics(
         json_path.write_text(render_trending_topic_json(topic), encoding="utf-8")
 
         topic_pages.append((topic, slug))
-        url = f"{base_url}/reports/trending/index.html#topic-{slug}"
+        url = report_item_url(
+            base_url=base_url,
+            report_path="trending",
+            fragment=f"topic-{slug}",
+            report=topic,
+        )
         record = {
             "title": topic.title,
             "url": url,
@@ -453,7 +459,12 @@ def publish_keyword_trends(
         json_path.write_text(render_keyword_trend_json(trend), encoding="utf-8")
 
         keyword_pages.append((trend, slug))
-        url = f"{base_url}/reports/keywords/index.html#keyword-{slug}"
+        url = report_item_url(
+            base_url=base_url,
+            report_path="keywords",
+            fragment=f"keyword-{slug}",
+            report=trend,
+        )
         record = {
             "title": trend.title,
             "url": url,
@@ -651,6 +662,20 @@ def remove_stale_report_detail_pages(report_dir: Path) -> None:
 
 def summary_with_html_link(summary: str, url: str) -> str:
     return f'{summary}\n\n<a href="{url}">查看网页</a>'
+
+
+def report_item_url(
+    *,
+    base_url: str,
+    report_path: str,
+    fragment: str,
+    report: TrendingTopic | KeywordTrend,
+) -> str:
+    snapshot = asdict(report)
+    snapshot.pop("generated_at", None)
+    encoded = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    version = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:12]
+    return f"{base_url}/reports/{report_path}/index.html?v={version}#{fragment}"
 
 
 def render_category_opml(category_records: list[dict[str, object]]) -> str:
